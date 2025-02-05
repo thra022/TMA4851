@@ -2,128 +2,128 @@ import React, { useEffect, useRef, useState } from "react";
 import { Hands } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
 
+// A type for the painters (which drive the ribbon effect)
+interface Painter {
+  dx: number;
+  dy: number;
+  ax: number;
+  ay: number;
+  ease: number;
+}
+
+// A type for each drawn segment; these will be stored in order.
+interface Segment {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  strokeWidth: number;
+  strokeColor: string;
+}
+
 const HandSignature: React.FC = () => {
+  // Refs for video and two canvases:
+  // - drawingCanvas: where the ribbon strokes are permanently drawn
+  // - overlayCanvas: where the bounding box/guidelines are drawn (cleared each frame)
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
 
-
-  // Calibration state
+  // State for calibration and UI
   const [isCalibrated, setIsCalibrated] = useState(false);
   const [boundingBox, setBoundingBox] = useState<{ x: number; y: number; size: number } | null>(null);
   const [showSaveButton, setShowSaveButton] = useState(false);
 
-  // Threshold settings
+  // Pinch detection settings (using a ref for the frame count)
   const pinchThreshold = 0.05;
   const debounceFrames = 5;
-  // This variable (in closure) counts how many consecutive frames are “pinching.”
-  let pinchFrames = 0;
+  const pinchFramesRef = useRef(0);
 
-  // Refs to store stroke data.
-  // Completed strokes (each stroke is an array of {x,y} points).
-  const strokesRef = useRef<{ x: number; y: number }[][]>([]);
-  // Points for the stroke currently being drawn.
-  const currentStrokeRef = useRef<{ x: number; y: number }[]>([]);
+  // For the ribbon painters and the current target point (from the pinch)
+  const paintersRef = useRef<Painter[]>([]);
+  const targetRef = useRef<{ x: number; y: number } | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
-  // Keep a ref to the latest value of showSaveButton (used in the onResults callback).
-  const showSaveButtonRef = useRef(showSaveButton);
-  useEffect(() => {
-    showSaveButtonRef.current = showSaveButton;
-  }, [showSaveButton]);
+  // New: A ref to store drawn segments (in order).
+  const segmentsRef = useRef<Segment[]>([]);
 
-  // --- Helper function to draw a smooth stroke on the canvas using quadratic curves ---
-  const drawSmoothStroke = (
-    ctx: CanvasRenderingContext2D,
-    points: { x: number; y: number }[]
-  ) => {
-    if (points.length < 2) return;
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 0; i < points.length - 1; i++) {
-      // Compute the midpoint between the current point and the next point.
-      const midX = (points[i].x + points[i + 1].x) / 2;
-      const midY = (points[i].y + points[i + 1].y) / 2;
-      ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+  // The update loop for the painters, using requestAnimationFrame.
+  const updatePainters = () => {
+    const drawingCanvas = drawingCanvasRef.current;
+    if (!drawingCanvas) return;
+    const ctx = drawingCanvas.getContext("2d");
+    if (!ctx) return;
+
+    // If there is no target (i.e. pinch released), stop the update loop.
+    if (!targetRef.current) {
+      animationFrameRef.current = null;
+      paintersRef.current = [];
+      return;
     }
-    // Ensure the curve finishes exactly at the last point.
-    ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
-    ctx.stroke();
+
+    const target = targetRef.current;
+    const div = 0.1; // damping factor
+
+    // For each painter, update its position toward the target.
+    paintersRef.current.forEach((painter) => {
+      const prevX = painter.dx;
+      const prevY = painter.dy;
+      // Update X component
+      painter.ax = (painter.ax + (painter.dx - target.x) * div) * painter.ease;
+      painter.dx -= painter.ax;
+      // Update Y component
+      painter.ay = (painter.ay + (painter.dy - target.y) * div) * painter.ease;
+      painter.dy -= painter.ay;
+
+      // Record this segment (preserving drawing order)
+      segmentsRef.current.push({
+        x1: prevX,
+        y1: prevY,
+        x2: painter.dx,
+        y2: painter.dy,
+        strokeWidth: 2,
+        strokeColor: "black",
+      });
+
+      // Draw the segment on the drawing canvas.
+      ctx.beginPath();
+      ctx.moveTo(prevX, prevY);
+      ctx.lineTo(painter.dx, painter.dy);
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    // Request the next frame.
+    animationFrameRef.current = requestAnimationFrame(updatePainters);
   };
 
-  // --- Helper function to get a smooth SVG path (using quadratic curves) from points ---
-  const getSmoothPathD = (points: { x: number; y: number }[]): string => {
-    if (points.length < 2) return "";
-    let d = `M ${points[0].x} ${points[0].y}`;
-    for (let i = 0; i < points.length - 1; i++) {
-      const midX = (points[i].x + points[i + 1].x) / 2;
-      const midY = (points[i].y + points[i + 1].y) / 2;
-      d += ` Q ${points[i].x} ${points[i].y}, ${midX} ${midY}`;
+  // Start the update loop if not already started.
+  const startAnimation = () => {
+    if (!animationFrameRef.current) {
+      animationFrameRef.current = requestAnimationFrame(updatePainters);
     }
-    d += ` L ${points[points.length - 1].x} ${points[points.length - 1].y}`;
-    return d;
   };
 
   useEffect(() => {
     const videoElement = videoRef.current;
-    const canvasElement = canvasRef.current;
-    if (!videoElement || !canvasElement) return;
-    const canvasCtx = canvasElement.getContext("2d");
-    if (!canvasCtx) return;
+    const overlayCanvas = overlayCanvasRef.current;
+    const drawingCanvas = drawingCanvasRef.current;
+    if (!videoElement || !overlayCanvas || !drawingCanvas) return;
 
-    // --- Helper function to clear & re‑draw the canvas (with smoothed strokes) ---
-    const redrawCanvas = () => {
-      // Clear the entire canvas.
-      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    // Set canvas dimensions.
+    overlayCanvas.width = 640;
+    overlayCanvas.height = 480;
+    drawingCanvas.width = 640;
+    drawingCanvas.height = 480;
 
-      // (Optional) Draw a light fill inside the bounding box (so you can see its region).
-      if (boundingBox) {
-        canvasCtx.fillStyle = "rgba(128, 128, 128, 0.2)";
-        canvasCtx.fillRect(
-          boundingBox.x - boundingBox.size,
-          boundingBox.y - boundingBox.size / 2,
-          boundingBox.size*2,
-          boundingBox.size
-        );
-      }
+    const overlayCtx = overlayCanvas.getContext("2d");
+    if (!overlayCtx) return;
 
-      // Draw all completed strokes using the smooth drawing helper.
-      strokesRef.current.forEach((stroke) => {
-        if (stroke.length === 0) return;
-        canvasCtx.strokeStyle = "black";
-        canvasCtx.lineWidth = 2;
-        drawSmoothStroke(canvasCtx, stroke);
-      });
-
-      // Draw the current stroke in progress.
-      if (currentStrokeRef.current.length > 0) {
-        canvasCtx.strokeStyle = "black";
-        canvasCtx.lineWidth = 2;
-        drawSmoothStroke(canvasCtx, currentStrokeRef.current);
-      }
-
-      // Finally, draw the overlay (the bounding box border and horizontal line).
-      if (boundingBox) {
-        // Draw a blue border around the bounding box.
-        canvasCtx.strokeStyle = "blue";
-        canvasCtx.lineWidth = 2;
-        canvasCtx.strokeRect(
-          boundingBox.x - boundingBox.size,
-          boundingBox.y - boundingBox.size / 2,
-          boundingBox.size*2,
-          boundingBox.size
-        );
-        // Draw a horizontal guideline.
-        //canvasCtx.beginPath();
-        //canvasCtx.moveTo(0, boundingBox.y);
-        //canvasCtx.lineTo(canvasElement.width, boundingBox.y);
-        //canvasCtx.stroke();
-      }
-    };
-
-    // --- Set up Mediapipe Hands ---
+    // Set up Mediapipe Hands.
     const hands = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
     });
-
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
@@ -132,64 +132,97 @@ const HandSignature: React.FC = () => {
     });
 
     hands.onResults((results) => {
-      if (!canvasCtx) return;
-      // Process results only if hand(s) are detected.
+      // Clear the overlay canvas (but not the drawing canvas).
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      // If calibrated, draw the bounding box and a horizontal guideline.
+      if (boundingBox) {
+        overlayCtx.strokeStyle = "blue";
+        overlayCtx.lineWidth = 2;
+        overlayCtx.strokeRect(
+          boundingBox.x - boundingBox.size,
+          boundingBox.y - boundingBox.size / 2,
+          boundingBox.size*2,
+          boundingBox.size
+        );
+        //overlayCtx.beginPath();
+        //overlayCtx.moveTo(0, boundingBox.y);
+        //overlayCtx.lineTo(overlayCanvas.width, boundingBox.y);
+        //overlayCtx.stroke();
+      }
+
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
         const landmarks = results.multiHandLandmarks[0];
         const thumbTip = landmarks[4];
         const indexTip = landmarks[8];
 
-        // Compute the Euclidean distance between thumb tip and index tip.
+        // Compute the Euclidean distance between thumb and index.
         const distance = Math.sqrt(
           Math.pow(thumbTip.x - indexTip.x, 2) +
-            Math.pow(thumbTip.y - indexTip.y, 2)
+          Math.pow(thumbTip.y - indexTip.y, 2)
         );
 
-        // Convert normalized coordinates to canvas pixel coordinates.
-        // (These are in the natural, non‑mirrored coordinate system.)
-        const x = indexTip.x * canvasElement.width;
-        const y = indexTip.y * canvasElement.height;
+        // Convert normalized coordinates to pixel coordinates.
+        const x = indexTip.x * overlayCanvas.width;
+        const y = indexTip.y * overlayCanvas.height;
 
         if (distance < pinchThreshold) {
-          // Pinching detected.
-          pinchFrames++;
-
-          // If not yet calibrated, and the pinch is held long enough, set the bounding box.
-          if (!isCalibrated && pinchFrames >= debounceFrames) {
+          // Pinching is detected.
+          pinchFramesRef.current++;
+          if (!isCalibrated && pinchFramesRef.current >= debounceFrames) {
+            // Calibrate by setting the bounding box.
             setBoundingBox({ x, y, size: 200 });
             setIsCalibrated(true);
           } else if (isCalibrated && boundingBox) {
-            // Once calibrated, add points only if within the bounding box.
-            let withinBounds =
+            // Only update if the point is within the bounding box.
+            const withinBounds =
               x >= boundingBox.x - boundingBox.size &&
               x <= boundingBox.x + boundingBox.size &&
               y >= boundingBox.y - boundingBox.size / 2 &&
               y <= boundingBox.y + boundingBox.size / 2;
             if (withinBounds) {
-              // Append the current point to the in‑progress stroke.
-              currentStrokeRef.current.push({ x, y });
-              // If the save button is visible, hide it since drawing has resumed.
-              if (showSaveButtonRef.current) {
-                setShowSaveButton(false);
+              // Set the target for the painters.
+              targetRef.current = { x, y };
+              // If painters are not yet initialized, do so.
+              if (paintersRef.current.length === 0) {
+                const numPainters = 20;
+                const baseEase = 0.7;
+                for (let i = 0; i < numPainters; i++) {
+                  const ease = baseEase + Math.random() * 0.05;
+                  paintersRef.current.push({
+                    dx: x,
+                    dy: y,
+                    ax: 0,
+                    ay: 0,
+                    ease: ease,
+                  });
+                }
+                startAnimation();
               }
             }
           }
         } else {
-          // Pinch is released.
-          if (currentStrokeRef.current.length > 0) {
-            // Save the completed stroke.
-            strokesRef.current.push([...currentStrokeRef.current]);
+          // Pinch released.
+          pinchFramesRef.current = 0;
+          targetRef.current = null;
+          if (paintersRef.current.length > 0) {
+            // Stop the animation loop.
+            if (animationFrameRef.current) {
+              cancelAnimationFrame(animationFrameRef.current);
+              animationFrameRef.current = null;
+            }
+            paintersRef.current = [];
+            // Show the Save button.
             setShowSaveButton(true);
           }
-          pinchFrames = 0;
-          currentStrokeRef.current = [];
         }
+      } else {
+        // No hand detected; clear the overlay.
+        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
       }
-      // Re‑draw the entire canvas (strokes, current stroke, overlay, etc.)
-      redrawCanvas();
     });
 
-    // --- Set up the camera ---
+    // Set up the camera.
     const camera = new Camera(videoElement, {
       onFrame: async () => {
         await hands.send({ image: videoElement });
@@ -201,54 +234,36 @@ const HandSignature: React.FC = () => {
 
     return () => {
       hands.close();
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, [isCalibrated, boundingBox]);
 
-  // --- Clear the canvas and stored strokes ---
+  // Clear the drawing canvas and reset the segments.
   const clearCanvas = () => {
-    const canvasElement = canvasRef.current;
-    if (!canvasElement) return;
-    const canvasCtx = canvasElement.getContext("2d");
-    if (canvasCtx) {
-      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    const drawingCanvas = drawingCanvasRef.current;
+    if (!drawingCanvas) return;
+    const ctx = drawingCanvas.getContext("2d");
+    if (ctx) {
+      ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     }
-    strokesRef.current = [];
-    currentStrokeRef.current = [];
+    segmentsRef.current = [];
     setShowSaveButton(false);
   };
 
-  // --- Generate an SVG string from the stroke data with smooth paths ---
-  const generateSVG = () => {
+  // Save the drawing as an SVG file, preserving the order of segments.
+  const saveSVG = () => {
     const width = 640;
     const height = 480;
-    let svgPaths = "";
-
-    // For each completed stroke…
-    strokesRef.current.forEach((stroke) => {
-      if (stroke.length === 0) return;
-      const d = getSmoothPathD(stroke);
-      svgPaths += `<path d="${d}" stroke="black" stroke-width="2" fill="none" />\n`;
+    let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n`;
+    // Apply a mirror transform (like the canvas) so that the SVG appears the same.
+    svgString += `<g transform="translate(${width},0) scale(-1,1)">\n`;
+    segmentsRef.current.forEach((segment) => {
+      svgString += `<line x1="${segment.x1}" y1="${segment.y1}" x2="${segment.x2}" y2="${segment.y2}" stroke="${segment.strokeColor}" stroke-width="${segment.strokeWidth}" />\n`;
     });
+    svgString += `</g>\n</svg>`;
 
-    // Include the in‑progress stroke (if any).
-    if (currentStrokeRef.current.length > 0) {
-      const d = getSmoothPathD(currentStrokeRef.current);
-      svgPaths += `<path d="${d}" stroke="black" stroke-width="2" fill="none" />\n`;
-    }
-
-    // Because the canvas (and video) are displayed mirrored via CSS,
-    // wrap the paths in a group that flips them so that the saved SVG matches the on‑screen view.
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-  <g transform="translate(${width},0) scale(-1,1)">
-    ${svgPaths}
-  </g>
-</svg>`;
-    return svg;
-  };
-
-  // --- Save the canvas as an SVG file ---
-  const saveCanvas = () => {
-    const svgString = generateSVG();
     const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -261,7 +276,7 @@ const HandSignature: React.FC = () => {
 
   return (
     <div style={{ position: "relative", width: "640px", height: "480px" }}>
-      {/* The video element is mirrored so that the user sees a mirror image. */}
+      {/* Video element (mirrored for a natural feel) */}
       <video
         ref={videoRef}
         style={{
@@ -275,23 +290,28 @@ const HandSignature: React.FC = () => {
         playsInline
         muted
       />
-
-      {/* The canvas overlay is also mirrored via CSS.
-          Note: The underlying drawing uses “natural” coordinates and our redraw logic.
-          (This is why we apply a transform in the saved SVG.) */}
+      {/* Drawing canvas (persistent ribbon strokes) */}
       <canvas
-        ref={canvasRef}
+        ref={drawingCanvasRef}
         style={{
           position: "absolute",
-          border: "1px solid black",
           width: "640px",
           height: "480px",
+          pointerEvents: "none",
           transform: "scaleX(-1)",
         }}
-        width="640"
-        height="480"
       />
-
+      {/* Overlay canvas (for bounding box and guidelines) */}
+      <canvas
+        ref={overlayCanvasRef}
+        style={{
+          position: "absolute",
+          width: "640px",
+          height: "480px",
+          pointerEvents: "none",
+          transform: "scaleX(-1)",
+        }}
+      />
       <button
         onClick={clearCanvas}
         style={{
@@ -309,10 +329,9 @@ const HandSignature: React.FC = () => {
       >
         Clear
       </button>
-
       {showSaveButton && (
         <button
-          onClick={saveCanvas}
+          onClick={saveSVG}
           style={{
             position: "absolute",
             bottom: "10px",
@@ -329,7 +348,6 @@ const HandSignature: React.FC = () => {
           Save
         </button>
       )}
-
       {!isCalibrated && (
         <div
           style={{
