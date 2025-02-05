@@ -1,0 +1,1 @@
+# Initial Django backend settings
