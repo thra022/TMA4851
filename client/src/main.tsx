@@ -1,7 +1,7 @@
 import ReactDOM from "react-dom/client"
 import { BrowserRouter, Routes, Route } from 'react-router'
 import './index.css'
-import App from './App'
+import { LoginPage } from "./pages"
 
 const root = document.getElementById('root')
 if (!root) {
@@ -11,7 +11,7 @@ if (!root) {
 ReactDOM.createRoot(root).render(
   <BrowserRouter>
     <Routes>
-      <Route index element={<App />} />
+      <Route path="/" element={<LoginPage />} />
     </Routes>
   </BrowserRouter>
 );
