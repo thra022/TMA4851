@@ -32,6 +32,7 @@ debugpy==1.8.1
 decorator==5.1.1
 distro @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_10ye1wu827/croot/distro_1701455019085/work
 Django==5.1.5
+django-cors-headers==4.7.0
 django-rest-framework==0.1.0
 djangorestframework==3.15.2
 dm-tree==0.1.8
