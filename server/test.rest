@@ -1,0 +1,11 @@
+GET http://127.0.0.1:8000/user/api
+Content-Type: application/json
+
+###
+
+POST http://127.0.0.1:8000/user/login
+Content-Type: application/json
+
+{"username": "aaryan.neupane", "password": "password" }
+
+###
