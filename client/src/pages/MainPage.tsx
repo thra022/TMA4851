@@ -1,3 +1,5 @@
+import { Navbar } from "./Navbar"
+
 /**
  * Temporary box
  */
@@ -69,6 +71,7 @@ export function MainPage() {
     return (
         <>
             <div className='mainWrapper'>
+                <Navbar />
                 <div className="row">
                     <div className='columnLeft'>
                         <Box />
