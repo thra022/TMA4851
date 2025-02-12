@@ -1,0 +1,189 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+/*bg-purple-900/80
+ mt-3 px-8 py-1 
+ rounded-full text-white 
+ hover:cursor-pointer*/
+ 
+/*
+Midlertidige greier før eg lærer meg Tailwind :)
+*/
+
+
+.nav {
+  display: grid;
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  padding: 10px;
+  background-color: darkblue;
+  margin: 0 auto;
+  width: 100%;
+
+}
+.navlist {
+  list-style-type:none;
+  text-align: left;
+
+}
+.navlist.alt {
+  list-style-type:none;
+  text-align: right;
+
+}
+.navlistelement {
+  display: inline;margin-right: 20px;
+}
+.navelementText {
+  color: white;
+}
+.navelementText:hover {
+  color: #eee;
+}
+.navelementText.active {
+  text-decoration: underline;
+}
+
+.navleft {
+  float: left;
+}
+.navright {
+  float: right;
+}
+
+
+.mainWrapper {
+  margin-top: 1rem;
+  flex: content;
+}
+
+
+
+.webcambox {
+  background-color: plum;
+  display: inline-block;
+  position: absolute;
+  left: 10px;
+  margin-left: 2rem;
+  margin-top: 2rem;
+  width: 660px;
+  height: 500px;
+  border-radius: 1rem;
+}
+
+
+.columnLeft {
+  float:left;
+  width: 60%;
+  padding: 10px;
+
+}
+.columnRight {
+  float:right;
+  width: 40%;
+  padding: 10px;
+}
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.box {
+  display: block;
+  width: 100%;
+  max-width: 680px;
+  height: 250px;
+  max-height: 400px;
+  background-color: red;
+  border-radius: 20px;
+  color: white;
+  outline-style:outset;
+  outline-color: grey;
+  outline-width: 5px;
+}
+
+.wlcHeader {
+  background-color: teal;
+  display: block;
+  border-radius: 10px;
+  opacity: 80%;
+  max-width: 300px;
+  color: white;
+}
+.wlc {
+  background-color: white;
+  display: block;
+  opacity: 100%;
+  text-decoration: wavy;
+  padding: 5px;
+  color: black;
+}
+
+
+.button {
+  opacity: 80%;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem; 
+  padding-left: 2rem;
+  padding-right: 2rem; 
+  margin-top: 0.75rem; 
+  border-radius: 9999px; 
+  color: #ffffff; 
+
+}
+.button:hover {
+  cursor: pointer;
+  filter: brightness(85%);
+  transition: 0.3s;
+}
+
+.button.purple {
+  background-color: #4C1D95;
+}
+.button.green {
+  background-color: green;
+}
+.button.blue {
+  background-color: blue;
+}
