@@ -81,7 +81,7 @@ const HandSignature: React.FC = () => {
         y1: prevY,
         x2: painter.dx,
         y2: painter.dy,
-        strokeWidth: 2,
+        strokeWidth: 1,
         strokeColor: "black",
       });
 
@@ -90,7 +90,7 @@ const HandSignature: React.FC = () => {
       ctx.moveTo(prevX, prevY);
       ctx.lineTo(painter.dx, painter.dy);
       ctx.strokeStyle = "black";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1;
       ctx.stroke();
     });
 
@@ -185,10 +185,10 @@ const HandSignature: React.FC = () => {
               targetRef.current = { x, y };
               // If painters are not yet initialized, do so.
               if (paintersRef.current.length === 0) {
-                const numPainters = 20;
-                const baseEase = 0.7;
+                const numPainters = 10;
+                const baseEase = 0.69;
                 for (let i = 0; i < numPainters; i++) {
-                  const ease = baseEase + Math.random() * 0.05;
+                  const ease = baseEase + Math.random() * 0.025;
                   paintersRef.current.push({
                     dx: x,
                     dy: y,
@@ -254,6 +254,34 @@ const HandSignature: React.FC = () => {
 
   // Save the drawing as an SVG file, preserving the order of segments.
   const saveSVG = () => {
+    // this saves it to a png instead
+    const drawingCanvas = drawingCanvasRef.current;
+    if (!drawingCanvas) return;
+  
+    // Create an offscreen canvas to correct the mirrored image
+    const offscreenCanvas = document.createElement("canvas");
+    offscreenCanvas.width = drawingCanvas.width;
+    offscreenCanvas.height = drawingCanvas.height;
+    const ctx = offscreenCanvas.getContext("2d");
+  
+    if (!ctx) return;
+  
+    // Flip the context back before drawing the image
+    ctx.translate(drawingCanvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(drawingCanvas, 0, 0);
+  
+    // Convert the corrected canvas to a PNG
+    const dataUrl = offscreenCanvas.toDataURL("image/png");
+  
+    // Create a download link
+    const link = document.createElement("a");
+    link.download = "signature.png";
+    link.href = dataUrl;
+    link.click();
+  
+    setShowSaveButton(false);
+    /*
     const width = 640;
     const height = 480;
     let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n`;
@@ -271,7 +299,7 @@ const HandSignature: React.FC = () => {
     link.href = url;
     link.click();
     URL.revokeObjectURL(url);
-    setShowSaveButton(false);
+    setShowSaveButton(false);*/
   };
 
   return (
