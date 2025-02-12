@@ -3,7 +3,7 @@ import { login } from '../services/api'
 import { useAuth } from '../context/auth/AuthContext'
 import { useNavigate } from 'react-router'
 
-function LoginPage() {
+export function LoginPage() {
     const [username, setUsername] = useState<string>('')
     const [password, setPassword] = useState<string>('')
     const [error, setError] = useState<string | null>(null)
@@ -39,5 +39,3 @@ function LoginPage() {
         </>
     )
 }
-
-export default LoginPage

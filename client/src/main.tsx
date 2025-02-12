@@ -2,7 +2,8 @@ import ReactDOM from "react-dom/client"
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
 import { AuthProvider } from "./context/auth/AuthContext"
 import './index.css'
-import { LoginPage, HomePage } from "./pages"
+import './App.css'
+import { LoginPage, MainPage } from "./pages"
 import ProtectedRoute from "./components/ProtectedRoute"
 
 const root = document.getElementById('root')
@@ -18,7 +19,7 @@ ReactDOM.createRoot(root).render(
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-                        <Route path="/" element={<HomePage />} />
+                        <Route path="/" element={<MainPage />} />
         </Route>
 
         {/* Redirect unknown routes to login */}
