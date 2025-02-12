@@ -21,6 +21,11 @@ interface Segment {
   strokeColor: string;
 }
 
+interface Coordinate {
+  x: number,
+  y: number,
+}
+
 const HandSignature: React.FC = () => {
   // Refs for video and two canvases:
   // - drawingCanvas: where the ribbon strokes are permanently drawn
@@ -42,10 +47,14 @@ const HandSignature: React.FC = () => {
   // For the ribbon painters and the current target point (from the pinch)
   const paintersRef = useRef<Painter[]>([]);
   const targetRef = useRef<{ x: number; y: number } | null>(null);
+  const normalizedTargetRef = useRef<{ x: number; y: number } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
   // New: A ref to store drawn segments (in order).
   const segmentsRef = useRef<Segment[]>([]);
+
+  // Normalized coordinates of the current signature.
+  const coordinatesRef = useRef<Coordinate[]>([]);
 
   // The update loop for the painters, using requestAnimationFrame.
   const updatePainters = () => {
@@ -55,14 +64,20 @@ const HandSignature: React.FC = () => {
     if (!ctx) return;
 
     // If there is no target (i.e. pinch released), stop the update loop.
-    if (!targetRef.current) {
+    if (!targetRef.current || !normalizedTargetRef.current) {
       animationFrameRef.current = null;
       paintersRef.current = [];
       return;
     }
 
     const target = targetRef.current;
+    const normalizedTarget = normalizedTargetRef.current;
     const div = 0.1; // damping factor
+
+    // Save current target coordinates.
+    if (coordinatesRef.current) {
+      coordinatesRef.current.push({x: normalizedTarget.x, y: normalizedTarget.y});
+    }
 
     // For each painter, update its position toward the target.
     paintersRef.current.forEach((painter) => {
@@ -162,9 +177,11 @@ const HandSignature: React.FC = () => {
           Math.pow(thumbTip.y - indexTip.y, 2)
         );
 
+        const normalizedX = indexTip.x;
+        const normalizedY = indexTip.y;
         // Convert normalized coordinates to pixel coordinates.
-        const x = indexTip.x * overlayCanvas.width;
-        const y = indexTip.y * overlayCanvas.height;
+        const x = normalizedX * overlayCanvas.width;
+        const y = normalizedY * overlayCanvas.height;
 
         if (distance < pinchThreshold) {
           // Pinching is detected.
@@ -183,6 +200,7 @@ const HandSignature: React.FC = () => {
             if (withinBounds) {
               // Set the target for the painters.
               targetRef.current = { x, y };
+              normalizedTargetRef.current = { x: normalizedX, y: normalizedY };
               // If painters are not yet initialized, do so.
               if (paintersRef.current.length === 0) {
                 const numPainters = 10;
@@ -205,6 +223,7 @@ const HandSignature: React.FC = () => {
           // Pinch released.
           pinchFramesRef.current = 0;
           targetRef.current = null;
+          normalizedTargetRef.current = null;
           if (paintersRef.current.length > 0) {
             // Stop the animation loop.
             if (animationFrameRef.current) {
@@ -300,6 +319,21 @@ const HandSignature: React.FC = () => {
     link.click();
     URL.revokeObjectURL(url);
     setShowSaveButton(false);*/
+  };
+
+  const saveCoordinates = () => {
+    let coordinatesString = "";
+    coordinatesRef.current.forEach((coord) => {
+      coordinatesString += `(${coord.x},${coord.y}), `
+    });
+
+    const blob = new Blob([coordinatesString], { type: "txt"});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = "coordinates.txt";
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
