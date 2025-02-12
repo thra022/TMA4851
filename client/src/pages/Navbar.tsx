@@ -14,7 +14,7 @@ export function Navbar() {
                     <li className='navlistelement'><NavLink className='navelementText' to="/home">Home</NavLink></li>
                 </div>
                 <div className='navright'>
-                <li className='navlistelement'><NavLink className='navelementText' to="/">Login</NavLink></li></div>
+                <li className='navlistelement'><NavLink className='navelementText' to="/login">Login</NavLink></li></div>
             </ul>
 
         </nav>
