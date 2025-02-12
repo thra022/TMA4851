@@ -1,7 +1,3 @@
-//import logo from '/src/assets/logo.svg'
-import { ReactNode, useState } from 'react'
-import { Link } from 'react-router'
-
 /**
  * Temporary box
  */
