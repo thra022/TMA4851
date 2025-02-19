@@ -224,6 +224,7 @@ const HandSignature: React.FC = () => {
           pinchFramesRef.current = 0;
           targetRef.current = null;
           normalizedTargetRef.current = null;
+
           if (paintersRef.current.length > 0) {
             // Stop the animation loop.
             if (animationFrameRef.current) {
@@ -268,6 +269,7 @@ const HandSignature: React.FC = () => {
       ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     }
     segmentsRef.current = [];
+    coordinatesRef.current = [];
     setShowSaveButton(false);
   };
 
