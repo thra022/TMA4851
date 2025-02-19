@@ -5,7 +5,7 @@ import { Navbar } from "./Navbar"
  */
 function Box() {
     return(
-        <div className='box'>
+        <div className='block w-full h-auto max-w-[680px] h-[250px] max-h-[400px] aspect-16/9 bg-[red] text-[white] outline-[grey] outline-[5px] rounded-[20px] outline-style: outset mt-3'>
             Webcam missing or something
             <br/>
             Oh, the humanity!
@@ -15,9 +15,9 @@ function Box() {
 
 function Welcome() {
     return(
-        <div className='wlcHeader'>
+        <div className='bg-[#b0caff] max-w-[300px] text-[white] rounded-[10px] mt-3'>
             <h1><b><i>Welcome</i></b></h1>
-            <div className='wlc'>
+            <div className='bg-[white] text-[black] p-[5px] text-decoration: wavy'>
                 <p>
                     <i>
                         Hello, welcome to Airsign inc.<br/>
@@ -38,9 +38,9 @@ function Welcome() {
 }
 function Upload() {
     return(
-        <div className='wlcHeader'>
+        <div className='bg-[#b0caff] max-w-[300px] text-[white] rounded-[10px] mt-3'>
             <h1><b><i>Upload files</i></b></h1>
-            <div className='wlc'>
+            <div className='bg-[white] text-[black] p-[5px] text-decoration: wavy'>
                 <p>
                     <i>
                         If you would like to sign a .pdf file, please upload the desired file here:
@@ -58,8 +58,10 @@ function Button(props:{title:string, colour:string}) {
     let example = () => {
         alert("nothing happened!")
     }
+
+
     return(
-        <button className={`button ${props.colour}`} onClick={example}>
+        <button className={`bg-[${props.colour}] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer`} onClick={example}>
             {props.title}
             </button>
     )
@@ -70,21 +72,24 @@ function Button(props:{title:string, colour:string}) {
 export function MainPage() {
     return (
         <>
-            <div className='mainWrapper'>
-                <Navbar />
-                <div className="row">
-                    <div className='columnLeft'>
-                        <Box />
-                        <div className='py-5'/>
-                        <Button title='Start capture' colour='green'/> <Button title='Export signature' colour='blue'/>
-
+        <Navbar />
+            <div className='flex-[content] mt-[45px] bg-[#d7f8ff] rounded-md h-full'>
+                <section className="">
+                    <div className="grid grid-cols-5 content-center py-5">
+                            <div className='px-5 col-span-3'>
+                                <Box />
+                                <div className='py-2'/>
+                                <Button title='Start capture' colour='green'/> 
+                                <Button title='Export signature' colour='blue'/>
+                            </div>
+                            <div className='px-5 col-span-2'>
+                                <Welcome />
+                                <div className='py-2'/>
+                                <Upload/>
+                                <div className='py-2'/>
+                            </div>
                     </div>
-                    <div className='columnRight'>
-                        <Welcome />
-                        <div className='py-10'/>
-                        <Upload/>
-                    </div>
-                </div>
+                </section>
             </div>
         </>
     )
