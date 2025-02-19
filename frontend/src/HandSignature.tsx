@@ -270,7 +270,10 @@ const HandSignature: React.FC = () => {
     }
     segmentsRef.current = [];
     coordinatesRef.current = [];
+    setBoundingBox(null);
+    setIsCalibrated(false);
     setShowSaveButton(false);
+
   };
 
   // Save the drawing as an SVG file, preserving the order of segments.
