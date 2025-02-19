@@ -304,6 +304,46 @@ const HandSignature: React.FC = () => {
     link.href = dataUrl;
     link.click();
   
+        // ----- 2) SAVE AN SVG -----
+
+    const width = drawingCanvas.width;
+    const height = drawingCanvas.height;
+
+    // Build the SVG string
+    let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n`;
+    // Apply the same mirror transform as the canvas
+    svgString += `  <g transform="translate(${width},0) scale(-1,1)">\n`;
+    svgString += `      <path
+        d="`
+
+    segmentsRef.current.forEach((segment) => {
+      svgString += `M${segment.x1} ${segment.y1} L${segment.x2} ${segment.y2} `
+
+
+      // svgString += `    <line
+      //   x1="${segment.x1}"
+      //   y1="${segment.y1}"
+      //   x2="${segment.x2}"
+      //   y2="${segment.y2}"
+      //   stroke="${segment.strokeColor}"
+      //   stroke-width="${segment.strokeWidth}"
+      // />\n`;
+    });
+    svgString += `"  style="fill:none;stroke:black;stroke-width:2" />`
+
+    svgString += `  </g>\n`;
+    svgString += `</svg>`;
+
+    // Convert the SVG string to a Blob
+    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    // Create a download link for the SVG
+    const linkSvg = document.createElement("a");
+    linkSvg.download = "signature.svg";
+    linkSvg.href = url;
+    linkSvg.click();
+
     setShowSaveButton(false);
     /*
     const width = 640;
