@@ -2,7 +2,6 @@ import ReactDOM from "react-dom/client"
 import { BrowserRouter, Routes, Route } from 'react-router'
 import { AuthProvider } from "./context/auth/AuthContext"
 import './index.css'
-import './App.css'
 import { LoginPage, MainPage } from "./pages"
 import ProtectedRoute from "./components/ProtectedRoute"
 

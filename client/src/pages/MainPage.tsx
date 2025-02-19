@@ -5,7 +5,7 @@ import { Navbar } from "./Navbar"
  */
 function Box() {
     return(
-        <div className='block w-full h-auto max-w-[680px] h-[250px] max-h-[400px] aspect-16/9 bg-[red] text-[white] outline-[grey] outline-[5px] rounded-[20px] outline-style: outset mt-3'>
+        <div className='inline-block w-full h-auto max-w-[680px] h-[250px] max-h-[400px] aspect-16/9 bg-[red] text-[white] outline-[grey] outline-[5px] rounded-[20px] outline-style: outset mt-3 justify-center'>
             Webcam missing or something
             <br/>
             Oh, the humanity!
@@ -72,26 +72,28 @@ function Button(props:{title:string, colour:string}) {
 export function MainPage() {
     return (
         <>
-        <Navbar />
-            <div className='flex-[content] mt-[45px] bg-[#d7f8ff] rounded-md h-full'>
-                <section className="">
-                    <div className="grid grid-cols-5 content-center py-5">
-                            <div className='px-5 col-span-3'>
-                                <Box />
-                                <div className='py-2'>
-                                <Button title='Start capture' colour='green'/> 
-                                <div className="inline-block mx-2"/>
-                                <Button title='Export signature' colour='blue'/>
+        <div className="max-width: 1280px margin: 0 auto padding: 2rem text-center">
+            <Navbar />
+                <div className='flex-[content] mt-[80px] bg-[#d7f8ff] rounded-md px-5'>
+                    <section className="">
+                        <div className="grid grid-cols-5 content-center py-5">
+                                <div className='px-10 col-span-3'>
+                                    <Box />
+                                    <div className='py-2'>
+                                    <Button title='Start capture' colour='green'/> 
+                                    <div className="inline-block mx-2"/>
+                                    <Button title='Export signature' colour='blue'/>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className='px-5 col-span-2'>
-                                <Welcome />
-                                <div className='py-2'/>
-                                <Upload/>
-                                <div className='py-2'/>
-                            </div>
-                    </div>
-                </section>
+                                <div className='px-10 col-span-2 text-lg'>
+                                    <Welcome />
+                                    <div className='py-2'/>
+                                    <Upload/>
+                                    <div className='py-2'/>
+                                </div>
+                        </div>
+                    </section>
+                </div>
             </div>
         </>
     )
