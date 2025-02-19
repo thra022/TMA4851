@@ -61,7 +61,7 @@ function Button(props:{title:string, colour:string}) {
 
 
     return(
-        <button className={`bg-[${props.colour}] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer`} onClick={example}>
+        <button className={`bg-[${props.colour}] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`} onClick={example}>
             {props.title}
             </button>
     )
@@ -78,9 +78,11 @@ export function MainPage() {
                     <div className="grid grid-cols-5 content-center py-5">
                             <div className='px-5 col-span-3'>
                                 <Box />
-                                <div className='py-2'/>
+                                <div className='py-2'>
                                 <Button title='Start capture' colour='green'/> 
+                                <div className="inline-block mx-2"/>
                                 <Button title='Export signature' colour='blue'/>
+                                </div>
                             </div>
                             <div className='px-5 col-span-2'>
                                 <Welcome />
