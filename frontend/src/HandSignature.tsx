@@ -142,8 +142,8 @@ const HandSignature: React.FC = () => {
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7,
     });
 
     hands.onResults((results) => {
