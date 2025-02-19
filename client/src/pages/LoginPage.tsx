@@ -9,7 +9,11 @@ export function LoginPage() {
     const [error, setError] = useState<string | null>(null)
 
     const navigate = useNavigate();
-    const { login: authLogin } = useAuth();
+    const { login: authLogin, isAuthenticated } = useAuth();
+
+    if (isAuthenticated) {
+        navigate('/')
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

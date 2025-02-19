@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client"
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
+import { BrowserRouter, Routes, Route } from 'react-router'
 import { AuthProvider } from "./context/auth/AuthContext"
 import './index.css'
 import './App.css'
@@ -23,7 +23,7 @@ ReactDOM.createRoot(root).render(
         </Route>
 
         {/* Redirect unknown routes to login */}
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="*" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>
   </AuthProvider>
