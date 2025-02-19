@@ -380,6 +380,7 @@ const HandSignature: React.FC = () => {
     setShowSaveButton(false);*/
   };
 
+  // FIXME: "Flip" the coordinates (and mirror them?).
   const saveCoordinates = () => {
     let coordinatesString = "";
     coordinatesRef.current.forEach((coord) => {
