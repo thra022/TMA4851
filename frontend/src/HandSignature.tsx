@@ -44,7 +44,8 @@ const HandSignature: React.FC = () => {
   const debounceFrames = 5;
   const pinchFramesRef = useRef(0);
 
-  // Integer to track first painter
+  // Integer to track first painter for the purpose of saving a single drawing to svg instead of all the painters that add detail.
+  // The purpose of the svg is mainly to track the order of painting, while the png is for the visualization.
   let firstPainter = 0;
 
   // For the ribbon painters and the current target point (from the pinch)
@@ -159,12 +160,22 @@ const HandSignature: React.FC = () => {
       if (boundingBox) {
         overlayCtx.strokeStyle = "blue";
         overlayCtx.lineWidth = 2;
+        overlayCtx.fillStyle = "white";
         overlayCtx.strokeRect(
           boundingBox.x - boundingBox.size,
           boundingBox.y - boundingBox.size / 2,
           boundingBox.size*2,
           boundingBox.size
         );
+        overlayCtx.globalAlpha = 0.36;
+        overlayCtx.fillRect(
+          boundingBox.x - boundingBox.size,
+          boundingBox.y - boundingBox.size / 2,
+          boundingBox.size*2,
+          boundingBox.size
+        );
+        overlayCtx.globalAlpha = 1;
+
         //overlayCtx.beginPath();
         //overlayCtx.moveTo(0, boundingBox.y);
         //overlayCtx.lineTo(overlayCanvas.width, boundingBox.y);
@@ -243,7 +254,7 @@ const HandSignature: React.FC = () => {
         }
       } else {
         // No hand detected; clear the overlay.
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        //overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
       }
     });
 
@@ -424,6 +435,7 @@ const HandSignature: React.FC = () => {
           position: "absolute",
           width: "640px",
           height: "480px",
+          zIndex: 4,
           pointerEvents: "none",
           transform: "scaleX(-1)",
         }}
@@ -435,8 +447,10 @@ const HandSignature: React.FC = () => {
           position: "absolute",
           width: "640px",
           height: "480px",
+          zIndex : 1,
           pointerEvents: "none",
           transform: "scaleX(-1)",
+
         }}
       />
       <button
