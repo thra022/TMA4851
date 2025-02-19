@@ -44,6 +44,9 @@ const HandSignature: React.FC = () => {
   const debounceFrames = 5;
   const pinchFramesRef = useRef(0);
 
+  // Integer to track first painter
+  let firstPainter = 0;
+
   // For the ribbon painters and the current target point (from the pinch)
   const paintersRef = useRef<Painter[]>([]);
   const targetRef = useRef<{ x: number; y: number } | null>(null);
@@ -78,7 +81,6 @@ const HandSignature: React.FC = () => {
     if (coordinatesRef.current) {
       coordinatesRef.current.push({x: normalizedTarget.x, y: normalizedTarget.y});
     }
-
     // For each painter, update its position toward the target.
     paintersRef.current.forEach((painter) => {
       const prevX = painter.dx;
@@ -91,14 +93,17 @@ const HandSignature: React.FC = () => {
       painter.dy -= painter.ay;
 
       // Record this segment (preserving drawing order)
-      segmentsRef.current.push({
-        x1: prevX,
-        y1: prevY,
-        x2: painter.dx,
-        y2: painter.dy,
-        strokeWidth: 1,
-        strokeColor: "black",
-      });
+      if (firstPainter == 0) {
+        firstPainter++;
+        segmentsRef.current.push({
+          x1: prevX,
+          y1: prevY,
+          x2: painter.dx,
+          y2: painter.dy,
+          strokeWidth: 1,
+          strokeColor: "black",
+        });
+      }
 
       // Draw the segment on the drawing canvas.
       ctx.beginPath();
@@ -108,7 +113,7 @@ const HandSignature: React.FC = () => {
       ctx.lineWidth = 1;
       ctx.stroke();
     });
-
+    firstPainter--;
     // Request the next frame.
     animationFrameRef.current = requestAnimationFrame(updatePainters);
   };
