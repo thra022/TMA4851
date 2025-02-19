@@ -37,3 +37,5 @@ ENV/
 
 # Database
 *.sqlite3
+
+data
