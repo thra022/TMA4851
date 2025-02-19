@@ -275,6 +275,17 @@ const HandSignature: React.FC = () => {
     setShowSaveButton(false);
 
   };
+  const clearPartly = () => {
+    const drawingCanvas = drawingCanvasRef.current;
+    if (!drawingCanvas) return;
+    const ctx = drawingCanvas.getContext("2d");
+    if (ctx) {
+      ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+    }
+    segmentsRef.current = [];
+    setShowSaveButton(false);
+
+  };
 
   // Save the drawing as an SVG file, preserving the order of segments.
   const saveSVG = () => {
@@ -437,16 +448,33 @@ const HandSignature: React.FC = () => {
           cursor: "pointer",
         }}
       >
-        Clear
+        Reset
       </button>
+      <button
+       onClick={clearPartly}
+       style={{
+         position: "absolute",
+         top: "10px",
+         right: "100px",
+         zIndex: 10,
+         padding: "10px 20px",
+         background: "orange",
+         color: "white",
+         border: "none",
+         borderRadius: "5px",
+         cursor: "pointer",
+       }}
+     >
+      Clear
+     </button>
       {showSaveButton && (
         <button
-          onClick={saveSVG}
-          style={{
-            position: "absolute",
-            bottom: "10px",
-            right: "10px",
-            zIndex: 10,
+        onClick={saveSVG}
+        style={{
+          position: "absolute",
+          bottom: "10px",
+          right: "10px",
+          zIndex: 10,
             padding: "10px 20px",
             background: "green",
             color: "white",
