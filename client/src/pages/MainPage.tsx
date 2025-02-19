@@ -1,6 +1,6 @@
 import { Navbar } from "./Navbar"
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Hands } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
 
@@ -402,17 +402,15 @@ function Box() {
   };
 
   return (
-    <div style={{ position: "relative", width: "640px", height: "480px" }}>
+    //<div className='inline-block w-full h-auto max-w-[680px] h-[250px] max-h-[400px] aspect-16/9 bg-[red] text-[white] outline-[grey] outline-[5px] rounded-[20px] outline-style: outset mt-3 justify-center'>
+
+    //<div style={{ position: "relative", width: "640px", height: "480px" }}>
+    <>
+    <div className='relative w-[640px] h-[480px] outline-[grey] outline-[5px] rounded-[5px] outline-style: outset mt-3'>
       {/* Video element (mirrored for a natural feel) */}
       <video
         ref={videoRef}
-        style={{
-          position: "absolute",
-          width: "640px",
-          height: "480px",
-          transform: "scaleX(-1)",
-          objectFit: "cover",
-        }}
+        className='absolute w-[640px] h-[480px] top-[0px] left-[0px] -scale-x-100 '
         autoPlay
         playsInline
         muted
@@ -420,95 +418,52 @@ function Box() {
       {/* Drawing canvas (persistent ribbon strokes) */}
       <canvas
         ref={drawingCanvasRef}
-        style={{
-          position: "absolute",
-          width: "640px",
-          height: "480px",
-          pointerEvents: "none",
-          transform: "scaleX(-1)",
-        }}
+        className="absolute w-[640px] h-[480px] top-[0px] left-[0px] -scale-x-100 "
+        
       />
       {/* Overlay canvas (for bounding box and guidelines) */}
       <canvas
         ref={overlayCanvasRef}
-        style={{
-          position: "absolute",
-          width: "640px",
-          height: "480px",
-          pointerEvents: "none",
-          transform: "scaleX(-1)",
-        }}
+        className="absolute w-[640px] h-[480px] top-[0px] left-[0px] -scale-x-100"
       />
-      <button
-        onClick={clearCanvas}
-        style={{
-          position: "absolute",
-          top: "10px",
-          right: "10px",
-          zIndex: 10,
-          padding: "10px 20px",
-          background: "red",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
-      >
-        Reset
-      </button>
-      <button
-       onClick={clearPartly}
-       style={{
-         position: "absolute",
-         top: "10px",
-         right: "100px",
-         zIndex: 10,
-         padding: "10px 20px",
-         background: "orange",
-         color: "white",
-         border: "none",
-         borderRadius: "5px",
-         cursor: "pointer",
-       }}
-     >
-      Clear
-     </button>
-      {showSaveButton && (
-        <button
-        onClick={saveSVG}
-        style={{
-          position: "absolute",
-          bottom: "10px",
-          right: "10px",
-          zIndex: 10,
-            padding: "10px 20px",
-            background: "green",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Save
-        </button>
-      )}
+      
+      
       {!isCalibrated && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(0, 0, 0, 0.8)",
-            color: "white",
-            padding: "20px",
-            borderRadius: "5px",
-          }}
+        <div className='absolute
+        top-50 
+        w-full
+        bg-[black]/80 text-[white] 
+        px-2 py-2 border-radius-2
+        rounded-[10px]'
+          
         >
           Please make a pinch to calibrate.
         </div>
       )}
     </div>
+    <button
+        onClick={clearCanvas}
+        className="inline-block bg-[red] text-[white] hover:brightness-[85%] hover:transition-[0.3s] hover:cursor-pointer mt-3 px-8 py-1 rounded-full text-lg"
+      >
+        Reset
+      </button>
+      <button
+       onClick={clearPartly}
+       className="inline-block bg-[orange] text-[white] hover:brightness-[85%] hover:transition-[0.3s] hover:cursor-pointer mt-3 px-8 py-1 rounded-full text-lg"
+       
+     >
+      Clear
+     </button>
+     {showSaveButton && (
+        <button
+        onClick={saveSVG}
+        className="inline-block bg-[green] text-[white] hover:brightness-[85%] hover:transition-[0.3s] hover:cursor-pointer mt-3 px-8 py-1 rounded-full text-lg"
+        >
+          Save
+        </button>
+
+      )}
+    </>
   );
 }
 
@@ -559,6 +514,8 @@ function Button(props:{title:string, colour:string}) {
     }
 
 
+
+
     return(
         <button className={`bg-[${props.colour}] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`} onClick={example}>
             {props.title}
@@ -571,7 +528,7 @@ function Button(props:{title:string, colour:string}) {
 export function MainPage() {
     return (
         <>
-        <div className="max-width: 1280px margin: 0 auto padding: 2rem text-center">
+        <div className="min-w-[1280px] h-full max-width: 1280px mx-[auto] my-[auto] p-2rem text-center">
             <Navbar />
                 <div className='flex-[content] mt-[80px] bg-[#d7f8ff] rounded-md px-5'>
                     <section className="">
@@ -579,9 +536,9 @@ export function MainPage() {
                                 <div className='px-10 col-span-3'>
                                     <Box />
                                     <div className='py-2'>
-                                    <Button title='Start capture' colour='green'/> 
+                                    <button className={`bg-[green] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`} onClick={alert('nothing happened')!}>Start Capture</button>
                                     <div className="inline-block mx-2"/>
-                                    <Button title='Export signature' colour='blue'/>
+                                    <button className={`bg-[blue] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`} onClick={alert('nothing happened')!}>Export Signature</button>
                                     </div>
                                 </div>
                                 <div className='px-10 col-span-2 text-lg'>
