@@ -304,7 +304,7 @@ const HandSignature: React.FC = () => {
   };
 
   // Save the drawing as an SVG file, preserving the order of segments.
-  const saveSVG = () => {
+  const saveSVGandPNG = () => {
     // Save coordinates to a text file
     saveCoordinates();
 
@@ -489,7 +489,7 @@ const HandSignature: React.FC = () => {
      </button>
       {showSaveButton && (
         <button
-        onClick={saveSVG}
+        onClick={saveSVGandPNG}
         style={{
           position: "absolute",
           bottom: "10px",
