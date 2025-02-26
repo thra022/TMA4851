@@ -7,11 +7,11 @@ export default defineConfig({
   base: "/",
   plugins: [react(), tailwindcss()],
   preview: {
-   port: 8000,
+   port: 5173,
    strictPort: true,
   },
   server: {
-   port: 8000,
+   port: 5173,
    strictPort: true,
    host: 'localhost',
    origin: "http://0.0.0.0:8000",
