@@ -2,6 +2,28 @@ import React, { useEffect, useRef, useState } from "react";
 import { Hands } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
 
+// Constants
+
+// Pinch detection settings (using a ref for the frame count)
+const pinchThreshold = 0.05;
+const debounceFrames = 5;
+
+const numPainters = 10;
+const baseEase = 0.69;
+
+const standardWidth = 640;
+const standardHeight = 480;
+
+// bounding box size 
+const boundingBoxSize = 200;
+
+const div = 0.1; // damping factor
+
+// minimum detection confidence and tracking confidence 
+const stdMinDetectionConfidence = 0.7;
+const stdMinTrackingConfidence = 0.7;
+
+
 // A type for the painters (which drive the ribbon effect)
 interface Painter {
   dx: number;
@@ -21,10 +43,10 @@ interface Segment {
   strokeColor: string;
 }
 
-interface Coordinate {
-  x: number,
-  y: number,
-}
+// interface Coordinate {
+//   x: number,
+//   y: number,
+// }
 
 const HandSignature: React.FC = () => {
   // Refs for video and two canvases:
@@ -39,9 +61,6 @@ const HandSignature: React.FC = () => {
   const [boundingBox, setBoundingBox] = useState<{ x: number; y: number; size: number } | null>(null);
   const [showSaveButton, setShowSaveButton] = useState(false);
 
-  // Pinch detection settings (using a ref for the frame count)
-  const pinchThreshold = 0.05;
-  const debounceFrames = 5;
   const pinchFramesRef = useRef(0);
 
   // Integer to track first painter for the purpose of saving a single drawing to svg instead of all the painters that add detail.
@@ -58,7 +77,7 @@ const HandSignature: React.FC = () => {
   const segmentsRef = useRef<Segment[]>([]);
 
   // Normalized coordinates of the current signature.
-  const coordinatesRef = useRef<Coordinate[]>([]);
+  //const coordinatesRef = useRef<Coordinate[]>([]);
 
   // The update loop for the painters, using requestAnimationFrame.
   const updatePainters = () => {
@@ -75,13 +94,7 @@ const HandSignature: React.FC = () => {
     }
 
     const target = targetRef.current;
-    const normalizedTarget = normalizedTargetRef.current;
-    const div = 0.1; // damping factor
 
-    // Save current target coordinates.
-    if (coordinatesRef.current) {
-      coordinatesRef.current.push({x: normalizedTarget.x, y: normalizedTarget.y});
-    }
     // For each painter, update its position toward the target.
     paintersRef.current.forEach((painter) => {
       const prevX = painter.dx;
@@ -133,10 +146,10 @@ const HandSignature: React.FC = () => {
     if (!videoElement || !overlayCanvas || !drawingCanvas) return;
 
     // Set canvas dimensions.
-    overlayCanvas.width = 640;
-    overlayCanvas.height = 480;
-    drawingCanvas.width = 640;
-    drawingCanvas.height = 480;
+    overlayCanvas.width = standardWidth;
+    overlayCanvas.height = standardHeight;
+    drawingCanvas.width = standardWidth;
+    drawingCanvas.height = standardHeight;
 
     const overlayCtx = overlayCanvas.getContext("2d");
     if (!overlayCtx) return;
@@ -148,8 +161,8 @@ const HandSignature: React.FC = () => {
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
-      minDetectionConfidence: 0.7,
-      minTrackingConfidence: 0.7,
+      minDetectionConfidence: stdMinDetectionConfidence,
+      minTrackingConfidence: stdMinTrackingConfidence,
     });
 
     hands.onResults((results) => {
@@ -175,11 +188,6 @@ const HandSignature: React.FC = () => {
           boundingBox.size
         );
         overlayCtx.globalAlpha = 1;
-
-        //overlayCtx.beginPath();
-        //overlayCtx.moveTo(0, boundingBox.y);
-        //overlayCtx.lineTo(overlayCanvas.width, boundingBox.y);
-        //overlayCtx.stroke();
       }
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
@@ -204,7 +212,7 @@ const HandSignature: React.FC = () => {
           pinchFramesRef.current++;
           if (!isCalibrated && pinchFramesRef.current >= debounceFrames) {
             // Calibrate by setting the bounding box.
-            setBoundingBox({ x, y, size: 200 });
+            setBoundingBox({ x, y, size: boundingBoxSize });
             setIsCalibrated(true);
           } else if (isCalibrated && boundingBox) {
             // Only update if the point is within the bounding box.
@@ -219,8 +227,6 @@ const HandSignature: React.FC = () => {
               normalizedTargetRef.current = { x: normalizedX, y: normalizedY };
               // If painters are not yet initialized, do so.
               if (paintersRef.current.length === 0) {
-                const numPainters = 10;
-                const baseEase = 0.69;
                 for (let i = 0; i < numPainters; i++) {
                   const ease = baseEase + Math.random() * 0.025;
                   paintersRef.current.push({
@@ -263,8 +269,8 @@ const HandSignature: React.FC = () => {
       onFrame: async () => {
         await hands.send({ image: videoElement });
       },
-      width: 640,
-      height: 480,
+      width: standardWidth,
+      height: standardHeight,
     });
     camera.start();
 
@@ -285,7 +291,7 @@ const HandSignature: React.FC = () => {
       ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     }
     segmentsRef.current = [];
-    coordinatesRef.current = [];
+    //coordinatesRef.current = [];
     setBoundingBox(null);
     setIsCalibrated(false);
     setShowSaveButton(false);
@@ -306,16 +312,18 @@ const HandSignature: React.FC = () => {
   // Save the drawing as an SVG file, preserving the order of segments.
   const saveSVGandPNG = () => {
     // Save coordinates to a text file
-    saveCoordinates();
+    //saveCoordinates();
 
     // this saves it to a png instead
     const drawingCanvas = drawingCanvasRef.current;
     if (!drawingCanvas) return;
+    const canvasWidth = drawingCanvas.width;
+    const canvasHeight = drawingCanvas.height;
   
     // Create an offscreen canvas to correct the mirrored image
     const offscreenCanvas = document.createElement("canvas");
-    offscreenCanvas.width = drawingCanvas.width;
-    offscreenCanvas.height = drawingCanvas.height;
+    offscreenCanvas.width = canvasWidth;
+    offscreenCanvas.height = canvasHeight;
     const ctx = offscreenCanvas.getContext("2d");
   
     if (!ctx) return;
@@ -325,44 +333,30 @@ const HandSignature: React.FC = () => {
     ctx.scale(-1, 1);
     ctx.drawImage(drawingCanvas, 0, 0);
   
-    // Convert the corrected canvas to a PNG
-    const dataUrl = offscreenCanvas.toDataURL("image/png");
-  
-    // Create a download link
-    const link = document.createElement("a");
-    link.download = "signature.png";
-    link.href = dataUrl;
-    link.click();
-  
-        // ----- 2) SAVE AN SVG -----
+    // ----- 1) SAVE PNG -----
 
-    const width = drawingCanvas.width;
-    const height = drawingCanvas.height;
+    offscreenCanvas.toBlob((blob) => {
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob!);
+      link.download = "signature.png";
+      link.href = url;
+      link.click();
+      console.log(`${url}`);
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  
+    // ----- 2) SAVE SVG -----
 
     // Build the SVG string
-    let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n`;
     // Apply the same mirror transform as the canvas
-    svgString += `  <g transform="translate(${width},0) scale(-1,1)">\n`;
-    svgString += `      <path
-        d="`
+    let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}">\n
+      <g transform="translate(${canvasWidth},0) scale(-1,1)">\n      <path
+        d="`;
 
     segmentsRef.current.forEach((segment) => {
       svgString += `M${segment.x1} ${segment.y1} L${segment.x2} ${segment.y2} `
-
-
-      // svgString += `    <line
-      //   x1="${segment.x1}"
-      //   y1="${segment.y1}"
-      //   x2="${segment.x2}"
-      //   y2="${segment.y2}"
-      //   stroke="${segment.strokeColor}"
-      //   stroke-width="${segment.strokeWidth}"
-      // />\n`;
     });
-    svgString += `"  style="fill:none;stroke:black;stroke-width:2" />`
-
-    svgString += `  </g>\n`;
-    svgString += `</svg>`;
+    svgString += `"  style="fill:none;stroke:black;stroke-width:2" />\n </g></svg>`;
 
     // Convert the SVG string to a Blob
     const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
@@ -373,54 +367,20 @@ const HandSignature: React.FC = () => {
     linkSvg.download = "signature.svg";
     linkSvg.href = url;
     linkSvg.click();
+    URL.revokeObjectURL(url);
 
     setShowSaveButton(false);
-    /*
-    const width = 640;
-    const height = 480;
-    let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n`;
-    // Apply a mirror transform (like the canvas) so that the SVG appears the same.
-    svgString += `<g transform="translate(${width},0) scale(-1,1)">\n`;
-    segmentsRef.current.forEach((segment) => {
-      svgString += `<line x1="${segment.x1}" y1="${segment.y1}" x2="${segment.x2}" y2="${segment.y2}" stroke="${segment.strokeColor}" stroke-width="${segment.strokeWidth}" />\n`;
-    });
-    svgString += `</g>\n</svg>`;
-
-    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.download = "signature.svg";
-    link.href = url;
-    link.click();
-    URL.revokeObjectURL(url);
-    setShowSaveButton(false);*/
-  };
-
-  // FIXME: "Flip" the coordinates (and mirror them?).
-  const saveCoordinates = () => {
-    let coordinatesString = "";
-    coordinatesRef.current.forEach((coord) => {
-      coordinatesString += `(${coord.x},${coord.y}), `
-    });
-
-    const blob = new Blob([coordinatesString], { type: "txt"});
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.download = "coordinates.txt";
-    link.href = url;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
-    <div style={{ position: "relative", width: "640px", height: "480px" }}>
+    <div style={{ position: "relative", width: `${standardWidth}px`, height: `${standardHeight}px` }}>
       {/* Video element (mirrored for a natural feel) */}
       <video
         ref={videoRef}
         style={{
           position: "absolute",
-          width: "640px",
-          height: "480px",
+          width: `${standardWidth}px`,
+          height: `${standardHeight}px`,
           transform: "scaleX(-1)",
           objectFit: "cover",
         }}
@@ -433,8 +393,8 @@ const HandSignature: React.FC = () => {
         ref={drawingCanvasRef}
         style={{
           position: "absolute",
-          width: "640px",
-          height: "480px",
+          width: `${standardWidth}px`,
+          height: `${standardHeight}px`,
           zIndex: 4,
           pointerEvents: "none",
           transform: "scaleX(-1)",
@@ -445,8 +405,8 @@ const HandSignature: React.FC = () => {
         ref={overlayCanvasRef}
         style={{
           position: "absolute",
-          width: "640px",
-          height: "480px",
+          width: `${standardWidth}px`,
+          height: `${standardHeight}px`,
           zIndex : 1,
           pointerEvents: "none",
           transform: "scaleX(-1)",
@@ -495,12 +455,12 @@ const HandSignature: React.FC = () => {
           bottom: "10px",
           right: "10px",
           zIndex: 10,
-            padding: "10px 20px",
-            background: "green",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
+          padding: "10px 20px",
+          background: "green",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
           }}
         >
           Save
