@@ -37,7 +37,7 @@ export function LoginPage() {
                     <input className='bg-white py-1' type='password' placeholder=' Password' onChange={(e) => setPassword(e.target.value)} />
                     <button className='bg-purple-900/80 mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer' type='submit'>Login</button>
                     {error && <p className='text-red-500'>{error}</p>}
-                    <a className='underline hover:cursor-pointer mt-1'> Register </a>
+                    <a className='underline hover:cursor-pointer mt-1' href='/register'> Register </a>
                 </form>
             </div>
         </>
