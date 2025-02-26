@@ -23,10 +23,47 @@ interface Segment {
   strokeColor: string;
 }
 
-interface Coordinate {
-  x: number,
-  y: number,
+// Constants
+
+// Pinch detection settings (using a ref for the frame count)
+const pinchThreshold = 0.05;
+const debounceFrames = 5;
+
+const numPainters = 10;
+const baseEase = 0.69;
+
+const standardWidth = 640;
+const standardHeight = 480;
+
+// bounding box size 
+const boundingBoxSize = 200;
+
+const div = 0.1; // damping factor
+
+// minimum detection confidence and tracking confidence 
+const stdMinDetectionConfidence = 0.9;
+const stdMinTrackingConfidence = 0.9;
+
+
+// A type for the painters (which drive the ribbon effect)
+interface Painter {
+  dx: number;
+  dy: number;
+  ax: number;
+  ay: number;
+  ease: number;
 }
+
+// A type for each drawn segment; these will be stored in order.
+interface Segment {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  strokeWidth: number;
+  strokeColor: string;
+}
+
 
 /**
  * Temporary box
@@ -44,10 +81,11 @@ function Box() {
   const [boundingBox, setBoundingBox] = useState<{ x: number; y: number; size: number } | null>(null);
   const [showSaveButton, setShowSaveButton] = useState(false);
 
-  // Pinch detection settings (using a ref for the frame count)
-  const pinchThreshold = 0.05;
-  const debounceFrames = 5;
   const pinchFramesRef = useRef(0);
+
+  // Integer to track first painter for the purpose of saving a single drawing to svg instead of all the painters that add detail.
+  // The purpose of the svg is mainly to track the order of painting, while the png is for the visualization.
+  let firstPainter = 0;
 
   // For the ribbon painters and the current target point (from the pinch)
   const paintersRef = useRef<Painter[]>([]);
@@ -59,7 +97,7 @@ function Box() {
   const segmentsRef = useRef<Segment[]>([]);
 
   // Normalized coordinates of the current signature.
-  const coordinatesRef = useRef<Coordinate[]>([]);
+  //const coordinatesRef = useRef<Coordinate[]>([]);
 
   // The update loop for the painters, using requestAnimationFrame.
   const updatePainters = () => {
@@ -76,13 +114,6 @@ function Box() {
     }
 
     const target = targetRef.current;
-    const normalizedTarget = normalizedTargetRef.current;
-    const div = 0.1; // damping factor
-
-    // Save current target coordinates.
-    if (coordinatesRef.current) {
-      coordinatesRef.current.push({x: normalizedTarget.x, y: normalizedTarget.y});
-    }
 
     // For each painter, update its position toward the target.
     paintersRef.current.forEach((painter) => {
@@ -96,14 +127,17 @@ function Box() {
       painter.dy -= painter.ay;
 
       // Record this segment (preserving drawing order)
-      segmentsRef.current.push({
-        x1: prevX,
-        y1: prevY,
-        x2: painter.dx,
-        y2: painter.dy,
-        strokeWidth: 1,
-        strokeColor: "black",
-      });
+      if (firstPainter == 0) {
+        firstPainter++;
+        segmentsRef.current.push({
+          x1: prevX,
+          y1: prevY,
+          x2: painter.dx,
+          y2: painter.dy,
+          strokeWidth: 1,
+          strokeColor: "black",
+        });
+      }
 
       // Draw the segment on the drawing canvas.
       ctx.beginPath();
@@ -113,7 +147,7 @@ function Box() {
       ctx.lineWidth = 1;
       ctx.stroke();
     });
-
+    firstPainter--;
     // Request the next frame.
     animationFrameRef.current = requestAnimationFrame(updatePainters);
   };
@@ -125,6 +159,14 @@ function Box() {
     }
   };
 
+  const drawConn = (ctx: CanvasRenderingContext2D, finger: any) => {
+    ctx.beginPath()
+    ctx.strokeStyle = 'blue'
+    ctx.arc(finger.x*standardWidth,finger.y*standardHeight,5,0,2*Math.PI)
+    ctx.stroke()
+
+  }
+
   useEffect(() => {
     const videoElement = videoRef.current;
     const overlayCanvas = overlayCanvasRef.current;
@@ -132,10 +174,10 @@ function Box() {
     if (!videoElement || !overlayCanvas || !drawingCanvas) return;
 
     // Set canvas dimensions.
-    overlayCanvas.width = 640;
-    overlayCanvas.height = 480;
-    drawingCanvas.width = 640;
-    drawingCanvas.height = 480;
+    overlayCanvas.width = standardWidth;
+    overlayCanvas.height = standardHeight;
+    drawingCanvas.width = standardWidth;
+    drawingCanvas.height = standardHeight;
 
     const overlayCtx = overlayCanvas.getContext("2d");
     if (!overlayCtx) return;
@@ -147,9 +189,10 @@ function Box() {
     hands.setOptions({
       maxNumHands: 1,
       modelComplexity: 1,
-      minDetectionConfidence: 0.7,
-      minTrackingConfidence: 0.7,
+      minDetectionConfidence: stdMinDetectionConfidence,
+      minTrackingConfidence: stdMinTrackingConfidence,
     });
+
 
     hands.onResults((results) => {
       // Clear the overlay canvas (but not the drawing canvas).
@@ -159,22 +202,31 @@ function Box() {
       if (boundingBox) {
         overlayCtx.strokeStyle = "blue";
         overlayCtx.lineWidth = 2;
+        overlayCtx.fillStyle = "white";
         overlayCtx.strokeRect(
           boundingBox.x - boundingBox.size,
           boundingBox.y - boundingBox.size / 2,
           boundingBox.size*2,
           boundingBox.size
         );
-        //overlayCtx.beginPath();
-        //overlayCtx.moveTo(0, boundingBox.y);
-        //overlayCtx.lineTo(overlayCanvas.width, boundingBox.y);
-        //overlayCtx.stroke();
+        overlayCtx.globalAlpha = 0.36;
+        overlayCtx.fillRect(
+          boundingBox.x - boundingBox.size,
+          boundingBox.y - boundingBox.size / 2,
+          boundingBox.size*2,
+          boundingBox.size
+        );
+        overlayCtx.globalAlpha = 1;
       }
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
         const landmarks = results.multiHandLandmarks[0];
         const thumbTip = landmarks[4];
         const indexTip = landmarks[8];
+
+        drawConn(overlayCtx, thumbTip)
+        drawConn(overlayCtx, indexTip)
+
 
         // Compute the Euclidean distance between thumb and index.
         const distance = Math.sqrt(
@@ -193,7 +245,7 @@ function Box() {
           pinchFramesRef.current++;
           if (!isCalibrated && pinchFramesRef.current >= debounceFrames) {
             // Calibrate by setting the bounding box.
-            setBoundingBox({ x, y, size: 200 });
+            setBoundingBox({ x, y, size: boundingBoxSize });
             setIsCalibrated(true);
           } else if (isCalibrated && boundingBox) {
             // Only update if the point is within the bounding box.
@@ -208,8 +260,6 @@ function Box() {
               normalizedTargetRef.current = { x: normalizedX, y: normalizedY };
               // If painters are not yet initialized, do so.
               if (paintersRef.current.length === 0) {
-                const numPainters = 10;
-                const baseEase = 0.69;
                 for (let i = 0; i < numPainters; i++) {
                   const ease = baseEase + Math.random() * 0.025;
                   paintersRef.current.push({
@@ -243,7 +293,7 @@ function Box() {
         }
       } else {
         // No hand detected; clear the overlay.
-        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        //overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
       }
     });
 
@@ -252,8 +302,8 @@ function Box() {
       onFrame: async () => {
         await hands.send({ image: videoElement });
       },
-      width: 640,
-      height: 480,
+      width: standardWidth,
+      height: standardHeight,
     });
     camera.start();
 
@@ -274,7 +324,7 @@ function Box() {
       ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
     }
     segmentsRef.current = [];
-    coordinatesRef.current = [];
+    //coordinatesRef.current = [];
     setBoundingBox(null);
     setIsCalibrated(false);
     setShowSaveButton(false);
@@ -293,65 +343,53 @@ function Box() {
   };
 
   // Save the drawing as an SVG file, preserving the order of segments.
-  const saveSVG = () => {
+  const saveSVGandPNG = () => {
     // Save coordinates to a text file
-    saveCoordinates();
+    //saveCoordinates();
 
     // this saves it to a png instead
     const drawingCanvas = drawingCanvasRef.current;
     if (!drawingCanvas) return;
-
+    const canvasWidth = drawingCanvas.width;
+    const canvasHeight = drawingCanvas.height;
+  
     // Create an offscreen canvas to correct the mirrored image
     const offscreenCanvas = document.createElement("canvas");
-    offscreenCanvas.width = drawingCanvas.width;
-    offscreenCanvas.height = drawingCanvas.height;
+    offscreenCanvas.width = canvasWidth;
+    offscreenCanvas.height = canvasHeight;
     const ctx = offscreenCanvas.getContext("2d");
-
+  
     if (!ctx) return;
-
+  
     // Flip the context back before drawing the image
     ctx.translate(drawingCanvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(drawingCanvas, 0, 0);
+  
+    // ----- 1) SAVE PNG -----
 
-    // Convert the corrected canvas to a PNG
-    const dataUrl = offscreenCanvas.toDataURL("image/png");
-
-    // Create a download link
-    const link = document.createElement("a");
-    link.download = "signature.png";
-    link.href = dataUrl;
-    link.click();
-
-        // ----- 2) SAVE AN SVG -----
-
-    const width = drawingCanvas.width;
-    const height = drawingCanvas.height;
+    offscreenCanvas.toBlob((blob) => {
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob!);
+      link.download = "signature.png";
+      link.href = url;
+      link.click();
+      console.log(`${url}`);
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  
+    // ----- 2) SAVE SVG -----
 
     // Build the SVG string
-    let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n`;
     // Apply the same mirror transform as the canvas
-    svgString += `  <g transform="translate(${width},0) scale(-1,1)">\n`;
-    svgString += `      <path
-        d="`
+    let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}">\n
+      <g transform="translate(${canvasWidth},0) scale(-1,1)">\n      <path
+        d="`;
 
     segmentsRef.current.forEach((segment) => {
       svgString += `M${segment.x1} ${segment.y1} L${segment.x2} ${segment.y2} `
-
-
-      // svgString += `    <line
-      //   x1="${segment.x1}"
-      //   y1="${segment.y1}"
-      //   x2="${segment.x2}"
-      //   y2="${segment.y2}"
-      //   stroke="${segment.strokeColor}"
-      //   stroke-width="${segment.strokeWidth}"
-      // />\n`;
     });
-    svgString += `"  style="fill:none;stroke:black;stroke-width:2" />`
-
-    svgString += `  </g>\n`;
-    svgString += `</svg>`;
+    svgString += `"  style="fill:none;stroke:black;stroke-width:2" />\n </g></svg>`;
 
     // Convert the SVG string to a Blob
     const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
@@ -362,43 +400,9 @@ function Box() {
     linkSvg.download = "signature.svg";
     linkSvg.href = url;
     linkSvg.click();
+    URL.revokeObjectURL(url);
 
     setShowSaveButton(false);
-    /*
-    const width = 640;
-    const height = 480;
-    let svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n`;
-    // Apply a mirror transform (like the canvas) so that the SVG appears the same.
-    svgString += `<g transform="translate(${width},0) scale(-1,1)">\n`;
-    segmentsRef.current.forEach((segment) => {
-      svgString += `<line x1="${segment.x1}" y1="${segment.y1}" x2="${segment.x2}" y2="${segment.y2}" stroke="${segment.strokeColor}" stroke-width="${segment.strokeWidth}" />\n`;
-    });
-    svgString += `</g>\n</svg>`;
-
-    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.download = "signature.svg";
-    link.href = url;
-    link.click();
-    URL.revokeObjectURL(url);
-    setShowSaveButton(false);*/
-  };
-
-  // FIXME: "Flip" the coordinates (and mirror them?).
-  const saveCoordinates = () => {
-    let coordinatesString = "";
-    coordinatesRef.current.forEach((coord) => {
-      coordinatesString += `(${coord.x},${coord.y}), `
-    });
-
-    const blob = new Blob([coordinatesString], { type: "txt"});
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.download = "coordinates.txt";
-    link.href = url;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   return (
@@ -456,7 +460,7 @@ function Box() {
      </button>
      {showSaveButton && (
         <button
-        onClick={saveSVG}
+        onClick={saveSVGandPNG}
         className="inline-block bg-[green] text-[white] hover:brightness-[85%] hover:transition-[0.3s] hover:cursor-pointer mt-3 px-8 py-1 rounded-full text-lg"
         >
           Save
