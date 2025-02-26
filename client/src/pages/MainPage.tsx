@@ -124,7 +124,32 @@ function Box() {
       animationFrameRef.current = requestAnimationFrame(updatePainters);
     }
   };
+  /**
+  const drawConn = (ctx:CanvasRenderingContext2D,finger:any, color: string) => {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 10
+    ctx.arc(finger.x*640,finger.y*480,5,0,2*Math.PI)
+    ctx.stroke();
+    
+  }
+  */
+  const drawPointer = (ctx:CanvasRenderingContext2D,finger:any, color: string) => {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 10
+    ctx.arc(finger.x*640,finger.y*480,2,0,2*Math.PI)
+    ctx.stroke();
 
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 10
+    ctx.globalAlpha=0.5
+    ctx.arc(finger.x*640,finger.y*480,10,0,2*Math.PI)
+    ctx.arc(finger.x*640,finger.y*480,5,0,2*Math.PI)
+    ctx.stroke();
+    
+  }
   useEffect(() => {
     const videoElement = videoRef.current;
     const overlayCanvas = overlayCanvasRef.current;
@@ -150,11 +175,14 @@ function Box() {
       minDetectionConfidence: 0.7,
       minTrackingConfidence: 0.7,
     });
+    
+    
 
     hands.onResults((results) => {
       // Clear the overlay canvas (but not the drawing canvas).
       overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
+      
       // If calibrated, draw the bounding box and a horizontal guideline.
       if (boundingBox) {
         overlayCtx.strokeStyle = "blue";
@@ -176,6 +204,7 @@ function Box() {
         const thumbTip = landmarks[4];
         const indexTip = landmarks[8];
 
+
         // Compute the Euclidean distance between thumb and index.
         const distance = Math.sqrt(
           Math.pow(thumbTip.x - indexTip.x, 2) +
@@ -188,7 +217,13 @@ function Box() {
         const x = normalizedX * overlayCanvas.width;
         const y = normalizedY * overlayCanvas.height;
 
+
+        //drawConn(overlayCtx,thumbTip,'blue')
+        //drawConn(overlayCtx,indexTip,'blue')
+
+
         if (distance < pinchThreshold) {
+          drawPointer(overlayCtx,indexTip,'black')
           // Pinching is detected.
           pinchFramesRef.current++;
           if (!isCalibrated && pinchFramesRef.current >= debounceFrames) {
@@ -202,6 +237,7 @@ function Box() {
               x <= boundingBox.x + boundingBox.size &&
               y >= boundingBox.y - boundingBox.size / 2 &&
               y <= boundingBox.y + boundingBox.size / 2;
+            console.log(withinBounds)
             if (withinBounds) {
               // Set the target for the painters.
               targetRef.current = { x, y };
@@ -395,10 +431,14 @@ function Box() {
     const blob = new Blob([coordinatesString], { type: "txt"});
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
+
     link.download = "coordinates.txt";
     link.href = url;
+    console.log(link)
+    console.log(url)
     link.click();
-    URL.revokeObjectURL(url);
+
+    //URL.revokeObjectURL(url);
   };
 
   return (
@@ -413,8 +453,8 @@ function Box() {
         className='absolute w-[640px] h-[480px] top-[0px] left-[0px] -scale-x-100 '
         autoPlay
         playsInline
-        muted
-      />
+        muted  
+        />
       {/* Drawing canvas (persistent ribbon strokes) */}
       <canvas
         ref={drawingCanvasRef}

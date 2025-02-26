@@ -1,0 +1,9 @@
+# På /user/api POST:
+{
+"username":"aaryan.neupane",
+"email":"blah@gmail.no",
+"fullName":"aaryanneupane",
+"password":"password"
+}
+
+ps. python manage.py runserver 8000
