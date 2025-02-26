@@ -502,28 +502,13 @@ function Upload() {
                 </p>
                 <br/>
                 <div>Choose which files to upload</div>
-                <Button title='Select files' colour='blue'/>
+                <button className={`bg-[blue] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`}>
+                  Select Files
+                </button>
             </div>
         </div>
     )
 }
-
-function Button(props:{title:string, colour:string}) {
-    let example = () => {
-        alert("nothing happened!")
-    }
-
-
-
-
-    return(
-        <button className={`bg-[${props.colour}] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`} onClick={example}>
-            {props.title}
-            </button>
-    )
-}
-
-
 
 export function MainPage() {
     return (
@@ -536,9 +521,6 @@ export function MainPage() {
                                 <div className='px-10 col-span-3'>
                                     <Box />
                                     <div className='py-2'>
-                                    <button className={`bg-[green] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`} onClick={alert('nothing happened')!}>Start Capture</button>
-                                    <div className="inline-block mx-2"/>
-                                    <button className={`bg-[blue] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`} onClick={alert('nothing happened')!}>Export Signature</button>
                                     </div>
                                 </div>
                                 <div className='px-10 col-span-2 text-lg'>
