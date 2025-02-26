@@ -9,7 +9,7 @@ const pinchThreshold = 0.05;
 const debounceFrames = 5;
 
 const numPainters = 10;
-const baseEase = 0.69;
+const baseEase = 0.7;
 
 const standardWidth = 640;
 const standardHeight = 480;
@@ -20,8 +20,8 @@ const boundingBoxSize = 200;
 const div = 0.1; // damping factor
 
 // minimum detection confidence and tracking confidence 
-const stdMinDetectionConfidence = 0.7;
-const stdMinTrackingConfidence = 0.7;
+const stdMinDetectionConfidence = 0.8;
+const stdMinTrackingConfidence = 0.8;
 
 
 // A type for the painters (which drive the ribbon effect)
@@ -212,7 +212,7 @@ const HandSignature: React.FC = () => {
           pinchFramesRef.current++;
           if (!isCalibrated && pinchFramesRef.current >= debounceFrames) {
             // Calibrate by setting the bounding box.
-            setBoundingBox({ x, y, size: boundingBoxSize });
+            setBoundingBox({x:x -  boundingBoxSize*0.8, y:y, size: boundingBoxSize });
             setIsCalibrated(true);
           } else if (isCalibrated && boundingBox) {
             // Only update if the point is within the bounding box.
