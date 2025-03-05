@@ -23,7 +23,6 @@ const div = 0.1; // damping factor
 const stdMinDetectionConfidence = 0.8;
 const stdMinTrackingConfidence = 0.8;
 
-
 // A type for the painters (which drive the ribbon effect)
 interface Painter {
   dx: number;
@@ -140,6 +139,8 @@ const HandSignature: React.FC = () => {
   };
 
   useEffect(() => {
+    let lastTime = performance.now();
+
     const videoElement = videoRef.current;
     const overlayCanvas = overlayCanvasRef.current;
     const drawingCanvas = drawingCanvasRef.current;
@@ -166,6 +167,12 @@ const HandSignature: React.FC = () => {
     });
 
     hands.onResults((results) => {
+
+      const now = performance.now();
+      const fps = Math.round(1000/(now - lastTime));
+      lastTime = now;
+      //console.log(`${fps}`);
+
       // Clear the overlay canvas (but not the drawing canvas).
       overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 
@@ -189,6 +196,7 @@ const HandSignature: React.FC = () => {
         );
         overlayCtx.globalAlpha = 1;
       }
+
 
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
         const landmarks = results.multiHandLandmarks[0];
