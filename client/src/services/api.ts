@@ -33,3 +33,21 @@ export const login = async (username: string, password: string) => {
         throw new Error("Error logging in.")
     }
 };
+
+export const register = async (username: string, password: string,  email: string, fullName: string) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/api`, {
+            username: username,
+            password: password,
+            email: email,
+            fullName: fullName
+        });
+
+        const data: response = response.data;
+
+        return data; 
+    } catch (error) {
+        console.error("Login error:", error);
+        throw new Error("Error logging in.")
+    }
+};
