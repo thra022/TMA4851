@@ -15,9 +15,9 @@ const stdMinDetectionConfidence = 0.9;
 const stdMinTrackingConfidence = 0.9;
 
 // Define Props (Optional)
-interface SignatureCanvasProps {
-  onSave?: (svgData: string, pngBlob: Blob) => void; // Callback for saving files
-}
+//interface SignatureCanvasProps {
+//  onSave?: (svgData: string, pngBlob: Blob) => void; // Callback for saving files
+//}
 
 // Define Types
 interface Painter {
@@ -37,7 +37,7 @@ interface Segment {
   strokeColor: string;
 }
 
-const SignatureCanvas: React.FC<SignatureCanvasProps> = ({ onSave }) => {
+const SignatureCanvas = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,6 +54,17 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({ onSave }) => {
   const normalizedTargetRef = useRef<{ x: number; y: number } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const segmentsRef = useRef<Segment[]>([]);
+
+  const hands = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+  });
+
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: stdMinDetectionConfidence,
+    minTrackingConfidence: stdMinTrackingConfidence,
+  });
 
   const updatePainters = () => {
     const drawingCanvas = drawingCanvasRef.current;
@@ -126,16 +137,6 @@ const SignatureCanvas: React.FC<SignatureCanvasProps> = ({ onSave }) => {
     const overlayCtx = overlayCanvas.getContext("2d");
     if (!overlayCtx) return;
 
-    const hands = new Hands({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-    });
-
-    hands.setOptions({
-      maxNumHands: 1,
-      modelComplexity: 1,
-      minDetectionConfidence: stdMinDetectionConfidence,
-      minTrackingConfidence: stdMinTrackingConfidence,
-    });
 
     hands.onResults((results) => {
       // Clear the overlay canvas (but not the drawing canvas).
