@@ -16,6 +16,7 @@ from ml_model import model, load_and_preprocess_image
 
 class UserListApiView(APIView):
     # permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
     def get(self, request, *args, **kwargs):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
@@ -27,6 +28,7 @@ class UserListApiView(APIView):
             "email": request.data.get("email"),
             "password": request.data.get("password"),
             "fullName": request.data.get("fullName"),
+            "signature": request.FILES.get("signature"),
         }
         serializer = UserSerializer(data=data)
         if serializer.is_valid():
@@ -65,11 +67,17 @@ class LoginApiView(APIView):
 
 #     def post(self, request, *args, **kwargs):
 #         username = request.data.get("username")
-#         # file = request.data.get("file")
-#         # if not file:
-#         #     return Response(
-#         #         {"message": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
-#         #     )
+#         if not username:
+#             return Response(
+#                 {"message": "Username is required."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+#         new_image = request.FILES.get("signature")
+#         if not new_image:
+#             return Response(
+#                 {"message": "No signature file provided."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
 
 #         try:
 #             user = User.objects.get(username=username)
