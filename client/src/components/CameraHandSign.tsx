@@ -37,7 +37,11 @@ interface Segment {
   strokeColor: string;
 }
 
-const SignatureCanvas = () => {
+interface camProps {
+  register?:  (pngBlob: Blob) => void;
+}
+
+const SignatureCanvas = ({ register }: camProps)  => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -278,6 +282,31 @@ const SignatureCanvas = () => {
       segmentsRef.current = [];
       setShowSaveButton(false);
     };
+
+    const handleRegister = () => {
+      const drawingCanvas = drawingCanvasRef.current;
+      if (!drawingCanvas) return;
+      const canvasWidth = drawingCanvas.width;
+      const canvasHeight = drawingCanvas.height;
+    
+      // Create an offscreen canvas to correct the mirrored image
+      const offscreenCanvas = document.createElement("canvas");
+      offscreenCanvas.width = canvasWidth;
+      offscreenCanvas.height = canvasHeight;
+      const ctx = offscreenCanvas.getContext("2d");
+    
+      if (!ctx) return;
+      // Flip the context back before drawing the image
+      ctx.translate(drawingCanvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(drawingCanvas, 0, 0);
+
+      offscreenCanvas.toBlob((blob) => {
+        if (blob && register) {
+          register(blob);
+        }
+      }, "image/png");
+    };
   
     // Save the drawing as an SVG file, preserving the order of segments.
     const saveSVGandPNG = () => {
@@ -464,10 +493,10 @@ const SignatureCanvas = () => {
          </button>
          {showSaveButton && (
             <button
-            onClick={saveSVGandPNG}
+            onClick={handleRegister}
             className="inline-block bg-[green] text-[white] hover:brightness-[85%] hover:transition-[0.3s] hover:cursor-pointer mt-3 px-8 py-1 rounded-full text-lg"
             >
-              Save
+              Register
             </button>
     
           )}

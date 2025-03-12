@@ -34,6 +34,19 @@ export const login = async (username: string, password: string) => {
     }
 };
 
+export const register2 = async (formdata: FormData) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/register`, formdata);
+
+        const data: response = response.data;
+
+        return data; 
+    } catch (error) {
+        console.error("Login error:", error);
+        throw new Error("Error logging in.")
+    }
+};
+
 export const register = async (username: string, password: string,  email: string, fullName: string) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/api`, {
