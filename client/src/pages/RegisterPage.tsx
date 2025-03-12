@@ -60,7 +60,7 @@ export function RegisterPage() {
             <div className='bg-[#b0caff] max-w-[300px] text-[white] rounded-[10px] mt-3'>
             <h1 className='px-1 text-center'><b><i>Welcome</i></b></h1>
             <div className='bg-[white] text-[black] p-[5px] text-decoration: wavy rounded-b-[10px]'>
-                <p>
+                <p> Hei ENES
                     <i>
                         Hello, welcome to Airsign inc.<br/>
                         In order to create your account, please enter your information here:<br/>
