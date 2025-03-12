@@ -51,3 +51,21 @@ export const register = async (username: string, password: string,  email: strin
         throw new Error("Error logging in.")
     }
 };
+
+export const validateSignature = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await axios.post(`${API_BASE_URL}/validate-signature`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error("Validation error:", error);
+        throw new Error("Error validating signature.");
+    }
+};

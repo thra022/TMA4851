@@ -8,6 +8,7 @@ class User(models.Model):
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
     fullName = models.CharField(max_length=100)
+    signature = models.ImageField(upload_to="signatures", blank=True, null=True)
 
     def save(self, *args, **kwargs):
         """Ensure password is hashed before saving."""
