@@ -48,17 +48,16 @@ export const register = async (formData: FormData) => {
     }
   };
 
-export const validateSignature = async (file: File) => {
+export const validateSignature = async (pngBlob: Blob, userName: string) => {
     const formData = new FormData();
-    formData.append('file', file);
-
+    formData.append('username', userName);
+    formData.append('test_signature', pngBlob, 'test_signature.png');
     try {
         const response = await axios.post(`${API_BASE_URL}/validate-signature`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
-
         return response.data;
     } catch (error) {
         console.error("Validation error:", error);

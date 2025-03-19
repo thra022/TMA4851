@@ -1,3 +1,5 @@
+import io
+from PIL import Image
 from tensorflow.keras.layers import (
     Conv2D,
     MaxPooling2D,
@@ -18,6 +20,9 @@ IMG_SIZE_Y = IMG_SIZE[1]
 
 
 def load_and_preprocess_image(image_path):
+    """
+    Loads and preprocesses an image from a file path.
+    """
     image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
     if image is None:
         raise ValueError(f"Failed to load image: {image_path}")
@@ -34,6 +39,29 @@ def load_and_preprocess_image(image_path):
 
     return np.expand_dims(image, axis=-1)
 
+def load_and_preprocess_inmemory_image(inmemory_file):
+    """
+    Loads and preprocesses an image from an InMemoryUploadedFile.
+    """
+    image_data = inmemory_file.read()
+    image = np.array(Image.open(io.BytesIO(image_data)))
+
+    if image is None:
+        raise ValueError("Failed to load image from InMemoryUploadedFile")
+
+    if image.shape[-1] == 4:  # If image has an alpha channel
+        alpha = image[:, :, 3] / 255.0
+        white_background = np.ones_like(image[:, :, :3], dtype=np.uint8) * 255
+        for c in range(3):
+            white_background[:, :, c] = (1.0 - alpha) * 255 + alpha * image[:, :, c]
+        image = cv2.cvtColor(white_background, cv2.COLOR_BGR2GRAY)
+    else:
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+
+    image = cv2.resize(image, IMG_SIZE)  # Resize image
+    image = image / 255.0  # Normalize pixel values
+
+    return np.expand_dims(image, axis=-1)  # Expand dimensions
 
 def build_siamese_network(input_shape=(IMG_SIZE_Y, IMG_SIZE_X, 1)):
     input_layer = Input(shape=input_shape)
