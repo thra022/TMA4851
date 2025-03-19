@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Hands } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
+import { validateSignature } from "../services/api";
+import { useAuth } from "../context/auth/AuthContext";
 
 // Constants
 const pinchThreshold = 0.05;
@@ -42,6 +44,7 @@ interface camProps {
 }
 
 const SignatureCanvas = ({ register }: camProps)  => {
+  const { userName, setProb } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -271,6 +274,7 @@ const SignatureCanvas = ({ register }: camProps)  => {
       setBoundingBox(null);
       setIsCalibrated(false);
       setShowSaveButton(false);
+      setProb(null);
     };
     const clearPartly = () => {
       const drawingCanvas = drawingCanvasRef.current;
@@ -281,6 +285,7 @@ const SignatureCanvas = ({ register }: camProps)  => {
       }
       segmentsRef.current = [];
       setShowSaveButton(false);
+      setProb(null);
     };
 
     const handleRegister = () => {
@@ -372,11 +377,34 @@ const SignatureCanvas = ({ register }: camProps)  => {
       setShowSaveButton(false);
     };
 
+    const handleValidate = () => {
+      const drawingCanvas = drawingCanvasRef.current;
+      if (!drawingCanvas) return;
+      const canvasWidth = drawingCanvas.width;
+      const canvasHeight = drawingCanvas.height;
+    
+      // Create an offscreen canvas to correct the mirrored image
+      const offscreenCanvas = document.createElement("canvas");
+      offscreenCanvas.width = canvasWidth;
+      offscreenCanvas.height = canvasHeight;
+      const ctx = offscreenCanvas.getContext("2d");
+    
+      if (!ctx) return;
+      // Flip the context back before drawing the image
+      ctx.translate(drawingCanvas.width, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(drawingCanvas, 0, 0);
+
+      offscreenCanvas.toBlob((blob) => {
+        if (blob && userName) {
+          const probability = validateSignature(blob, userName);
+          probability.then((data) => setProb(data.probability[0][0]));
+        }
+      }, "image/png");
+    }
+
     if (document.location.pathname == "/") {
       return (
-        //<div className='inline-block w-full h-auto max-w-[680px] h-[250px] max-h-[400px] aspect-16/9 bg-[red] text-[white] outline-[grey] outline-[5px] rounded-[20px] outline-style: outset mt-3 justify-center'>
-    
-        //<div style={{ position: "relative", width: "640px", height: "480px" }}>
         <>
         <div className='relative w-[640px] h-[480px] outline-[grey] outline-[5px] rounded-[5px] outline-style: outset mt-3'>
           {/* Video element (mirrored for a natural feel) */}
@@ -427,13 +455,20 @@ const SignatureCanvas = ({ register }: camProps)  => {
           Clear
          </button>
          {showSaveButton && (
+          <div>
             <button
             onClick={saveSVGandPNG}
             className="inline-block bg-[green] text-[white] hover:brightness-[85%] hover:transition-[0.3s] hover:cursor-pointer mt-3 px-8 py-1 rounded-full text-lg"
             >
               Save
             </button>
-    
+            <button
+            onClick={handleValidate}
+            className="inline-block bg-[green] text-[white] hover:brightness-[85%] hover:transition-[0.3s] hover:cursor-pointer mt-3 px-8 py-1 rounded-full text-lg"
+            >
+              Validate
+            </button>
+          </div>
           )}
         </>
       );

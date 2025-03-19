@@ -28,7 +28,7 @@ export function LoginPage() {
         setError(null);
         try {
             const data = await login(username, password)
-            authLogin(data.token);
+            authLogin(data.token, username);
             navigate("/");
         } catch (err) {
             setError('Login failed. Please check your credentials and try again.')

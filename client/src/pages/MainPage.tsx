@@ -1,5 +1,6 @@
 import { Navbar } from "./Navbar"
 import SignatureCanvas from "../components/CameraHandSign"
+import { useAuth } from "../context/auth/AuthContext"
 
 function Welcome() {
     return(
@@ -45,6 +46,8 @@ function Upload() {
 }
 
 export function MainPage() {
+    const { probability } = useAuth();
+
     return (
         <>
         <div className="min-w-[1280px] h-full max-width: 1280px mx-[auto] my-[auto] p-2rem text-center">
@@ -54,6 +57,7 @@ export function MainPage() {
                         <div className="grid grid-cols-5 content-center py-5">
                                 <div className='px-10 col-span-3'>
                                     <SignatureCanvas />
+                                    {probability ? <p>Probability: {probability}</p> : null}
                                     <div className='py-2'>
                                     </div>
                                 </div>

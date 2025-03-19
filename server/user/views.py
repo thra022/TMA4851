@@ -11,8 +11,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import tensorflow as tf
 from PIL import Image
 import numpy as np
-import io
-from ml_model import model, load_and_preprocess_image
+from ml_model import model, load_and_preprocess_image, load_and_preprocess_inmemory_image
+import cv2
 
 class UserListApiView(APIView):
     # permission_classes = [permissions.IsAuthenticated]
@@ -62,36 +62,34 @@ class LoginApiView(APIView):
         )
 
 
-# class ValidateSignatureApiView(APIView):
-#     parser_classes = (MultiPartParser, FormParser)
+class ValidateSignatureApiView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
 
-#     def post(self, request, *args, **kwargs):
-#         username = request.data.get("username")
-#         if not username:
-#             return Response(
-#                 {"message": "Username is required."},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
-#         new_image = request.FILES.get("signature")
-#         if not new_image:
-#             return Response(
-#                 {"message": "No signature file provided."},
-#                 status=status.HTTP_400_BAD_REQUEST,
-#             )
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        if not username:
+            return Response(
+                {"message": "Username not provided."},
+                status=status.HTTP_400_BAD_REQUEST,)
 
-#         try:
-#             user = User.objects.get(username=username)
-#             original_image_file = user.signature
+        new_image = request.FILES.get("test_signature")
+        if not new_image:
+            return Response(
+                {"message": "No signature file provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-#             new_image = GET FROM PNG FROM REQUEST
-#             X1 = np.array([load_and_preprocess_image(origial_iamge)])
-#             X2 = np.array([load_and_preprocess_image(new_image)])
-
-#             # Make prediction
-#             prediction = model.predict([X1, X2])
-
-#             return Response({"probability": prediction}, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             return Response(
-#                 {"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#             )
+        try:
+            user = User.objects.get(username=username)
+            original_image_path = user.signature.path
+            X1 = np.array([load_and_preprocess_image(original_image_path)])
+            X2 = np.array([load_and_preprocess_inmemory_image(new_image)])
+            # Make prediction
+            prediction = model.predict([X1, X2])
+            print(prediction)
+            return Response({"probability": prediction}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(str(e))
+            return Response(
+                {"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
