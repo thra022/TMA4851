@@ -62,7 +62,7 @@ export function RegisterPage() {
         try {
             await register(formData);
             const data = await login(username, password)
-            authLogin(data.token);
+            authLogin(data.token, username);
             navigate("/");
         }
         catch (err) {

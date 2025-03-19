@@ -37,7 +37,7 @@ function Upload() {
                 </p>
                 <br/>
                 <div>Choose which files to upload</div>
-                <button className={`bg-[blue] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`}>
+                <button className={`bg-[blue] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white text-lg`}>
                   Select Files
                 </button>
             </div>
