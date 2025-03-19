@@ -372,7 +372,7 @@ const SignatureCanvas = ({ register }: camProps)  => {
       setShowSaveButton(false);
     };
 
-    if (document.location.pathname == "/tempMain") {
+    if (document.location.pathname == "/") {
       return (
         //<div className='inline-block w-full h-auto max-w-[680px] h-[250px] max-h-[400px] aspect-16/9 bg-[red] text-[white] outline-[grey] outline-[5px] rounded-[20px] outline-style: outset mt-3 justify-center'>
     

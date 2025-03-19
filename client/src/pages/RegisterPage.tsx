@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { register, register2 } from '../services/api'
-//import { useAuth } from '../context/auth/AuthContext'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../context/auth/AuthContext'
+import { register } from '../services/api'
 import { useNavigate } from 'react-router'
 import SignatureCanvas from '../components/CameraHandSign'
 
@@ -14,6 +14,14 @@ export function RegisterPage() {
     const [showOverlay, setShowOverlay] = useState(false);
 
     const navigate = useNavigate();
+
+        const { isAuthenticated } = useAuth();
+    
+        useEffect(() => {
+            if (isAuthenticated) {
+                navigate('/')
+            }
+        }, [])
 
     const handleContinue = (e: React.FormEvent) => {
         e.preventDefault()
@@ -42,54 +50,16 @@ export function RegisterPage() {
         }
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setError(null);
-
-        let invalid = false
-
-        if (username == '') {
-            setError('username missing')
-            invalid = true
-        }
-        if (email == '') {
-            setError('Email missing')
-            invalid = true
-        }
-        if (fullName == '') {
-            setError('Full Name missing')
-            invalid = true
-        }
-        if (password == '') {
-            setError('Password missing')
-            invalid = true
-        }
-        if (password != password1) {
-            setError('Passwords do not match')
-            invalid = true
-        }
-        if (!invalid) {
-            try {
-                const data = await register(username, password, email, fullName)
-                if (data != null) {
-                    navigate("/login");
-                }
-            } catch (err) {
-                setError('Registration failed. Please check your information and try again.')
-            }
-        }
-    }
-
     const handleRegister = async (pngBlob: Blob) => {
         const formData = new FormData();
         formData.append('username', username);
         formData.append('password', password);
         formData.append('email', email);
         formData.append('fullName', fullName);
-        formData.append('signature', pngBlob);
+        formData.append('signature', pngBlob, 'signature.png');
 
         try {
-            const data = await register2(formData);
+            await register(formData);
 
         }
         catch (err) {
