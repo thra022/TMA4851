@@ -7,10 +7,16 @@ from .models import User
 from .serializers import UserSerializer
 from rest_framework.authtoken.models import Token
 from django.http import JsonResponse
-
+from rest_framework.parsers import MultiPartParser, FormParser
+import tensorflow as tf
+from PIL import Image
+import numpy as np
+import io
+from ml_model import model, load_and_preprocess_image
 
 class UserListApiView(APIView):
     # permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
     def get(self, request, *args, **kwargs):
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
@@ -22,6 +28,7 @@ class UserListApiView(APIView):
             "email": request.data.get("email"),
             "password": request.data.get("password"),
             "fullName": request.data.get("fullName"),
+            "signature": request.FILES.get("signature"),
         }
         serializer = UserSerializer(data=data)
         if serializer.is_valid():
@@ -53,3 +60,38 @@ class LoginApiView(APIView):
         return Response(
             {"token": "RealToken", "user": serializer.data}, status=status.HTTP_200_OK
         )
+
+
+# class ValidateSignatureApiView(APIView):
+#     parser_classes = (MultiPartParser, FormParser)
+
+#     def post(self, request, *args, **kwargs):
+#         username = request.data.get("username")
+#         if not username:
+#             return Response(
+#                 {"message": "Username is required."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+#         new_image = request.FILES.get("signature")
+#         if not new_image:
+#             return Response(
+#                 {"message": "No signature file provided."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         try:
+#             user = User.objects.get(username=username)
+#             original_image_file = user.signature
+
+#             new_image = GET FROM PNG FROM REQUEST
+#             X1 = np.array([load_and_preprocess_image(origial_iamge)])
+#             X2 = np.array([load_and_preprocess_image(new_image)])
+
+#             # Make prediction
+#             prediction = model.predict([X1, X2])
+
+#             return Response({"probability": prediction}, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response(
+#                 {"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )

@@ -34,20 +34,34 @@ export const login = async (username: string, password: string) => {
     }
 };
 
-export const register = async (username: string, password: string,  email: string, fullName: string) => {
+export const register = async (formData: FormData) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/api`, {
-            username: username,
-            password: password,
-            email: email,
-            fullName: fullName
+      const response = await axios.post(`${API_BASE_URL}/api`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Registration error:", error);
+      throw new Error("Error registering.");
+    }
+  };
+
+export const validateSignature = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await axios.post(`${API_BASE_URL}/validate-signature`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
         });
 
-        const data: response = response.data;
-
-        return data; 
+        return response.data;
     } catch (error) {
-        console.error("Login error:", error);
-        throw new Error("Error logging in.")
+        console.error("Validation error:", error);
+        throw new Error("Error validating signature.");
     }
 };
