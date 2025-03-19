@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { login } from '../services/api'
 import { useAuth } from '../context/auth/AuthContext'
 import { register } from '../services/api'
 import { useNavigate } from 'react-router'
@@ -15,13 +16,13 @@ export function RegisterPage() {
 
     const navigate = useNavigate();
 
-        const { isAuthenticated } = useAuth();
-    
-        useEffect(() => {
-            if (isAuthenticated) {
-                navigate('/')
-            }
-        }, [])
+    const { login: authLogin, isAuthenticated } = useAuth();
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/')
+        }
+    }, [])
 
     const handleContinue = (e: React.FormEvent) => {
         e.preventDefault()
@@ -60,7 +61,9 @@ export function RegisterPage() {
 
         try {
             await register(formData);
-
+            const data = await login(username, password)
+            authLogin(data.token);
+            navigate("/");
         }
         catch (err) {
             setError('Registration failed. Please check your information and try again.')
