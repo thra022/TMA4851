@@ -3,6 +3,7 @@ import { Navbar } from "./Navbar"
 import { useEffect, useRef, useState } from "react";
 import { Hands } from "@mediapipe/hands";
 import { Camera } from "@mediapipe/camera_utils";
+import SingleFileUploader from "../components/FileUploader";
 
 // A type for the painters (which drive the ribbon effect)
 interface Painter {
@@ -106,6 +107,7 @@ function Box() {
     const ctx = drawingCanvas.getContext("2d");
     if (!ctx) return;
 
+
     // If there is no target (i.e. pinch released), stop the update loop.
     if (!targetRef.current || !normalizedTargetRef.current) {
       animationFrameRef.current = null;
@@ -143,7 +145,7 @@ function Box() {
       ctx.beginPath();
       ctx.moveTo(prevX, prevY);
       ctx.lineTo(painter.dx, painter.dy);
-      ctx.strokeStyle = "black";
+      ctx.strokeStyle = "red";
       ctx.lineWidth = 1;
       ctx.stroke();
     });
@@ -342,6 +344,16 @@ function Box() {
 
   };
 
+  const checkFile = () => {
+    let page: HTMLElement | null = document.getElementById('myPdf')
+    if (page == null) { return 1}
+    //let content = iframe.contentWindow.document.getElementById('editorStampButton')
+
+    if (page != null) {
+      alert('yes')
+    }
+  }
+
   // Save the drawing as an SVG file, preserving the order of segments.
   const saveSVGandPNG = () => {
     // Save coordinates to a text file
@@ -352,7 +364,7 @@ function Box() {
     if (!drawingCanvas) return;
     const canvasWidth = drawingCanvas.width;
     const canvasHeight = drawingCanvas.height;
-  
+
     // Create an offscreen canvas to correct the mirrored image
     const offscreenCanvas = document.createElement("canvas");
     offscreenCanvas.width = canvasWidth;
@@ -360,11 +372,29 @@ function Box() {
     const ctx = offscreenCanvas.getContext("2d");
   
     if (!ctx) return;
-  
-    // Flip the context back before drawing the image
+    ctx.canvas.width = boundingBox!.size;
+    ctx.canvas.height = boundingBox!.size / 2;
     ctx.translate(drawingCanvas.width, 0);
     ctx.scale(-1, 1);
-    ctx.drawImage(drawingCanvas, 0, 0);
+
+    //ctx.fillStyle = 'white'
+    //ctx.fillRect(0,0,canvasWidth,canvasHeight)
+  
+    // Flip the context back before drawing the image
+    
+    let sx = boundingBox!.x - boundingBox!.size
+    let sy = boundingBox!.y-boundingBox!.size/2
+    let sw = boundingBox!.size * 2
+    let sh = boundingBox!.size
+    let dx = -boundingBox!.size + 640
+    let dy = 0
+    let dw = ctx.canvas.width
+    let dh = ctx.canvas.height
+    //ctx.fillStyle = 'white'
+    //ctx.fillRect(0,0,dw,dh)
+    ctx.drawImage(drawingCanvas, sx, sy, sw, sh , dx, dy, dw, dh);
+
+    //TODO properly translate coords for each segment
   
     // ----- 1) SAVE PNG -----
 
@@ -377,7 +407,28 @@ function Box() {
       console.log(`${url}`);
       URL.revokeObjectURL(url);
     }, "image/png");
-  
+
+    
+    
+   offscreenCanvas.toBlob((blob) => {
+    if (!blob) {
+      return console.error('no blob')
+    }
+    try {
+      if (ClipboardItem.supports('image/png')) {
+          navigator.clipboard.write([
+              new ClipboardItem({
+                  'image/png': blob
+              })
+          ]);
+      } else {
+        console.error('PNG not supported')
+      }
+  } catch (error) {
+      console.error(error)
+  }
+  })
+
     // ----- 2) SAVE SVG -----
 
     // Build the SVG string
@@ -395,6 +446,7 @@ function Box() {
     const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
 
+    
     // Create a download link for the SVG
     const linkSvg = document.createElement("a");
     linkSvg.download = "signature.svg";
@@ -494,26 +546,15 @@ function Welcome() {
         </div>
     )
 }
+
 function Upload() {
     return(
-        <div className='bg-[#b0caff] max-w-[300px] text-[white] rounded-[10px] mt-3'>
-            <h1><b><i>Upload files</i></b></h1>
-            <div className='bg-[white] text-[black] p-[5px] text-decoration: wavy'>
-                <p>
-                    <i>
-                        If you would like to sign a .pdf file, please upload the desired file here:
-                    </i>
-                </p>
-                <br/>
-                <div>Choose which files to upload</div>
-                <button className={`bg-[blue] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white hover:cursor-pointer text-lg`}>
-                  Select Files
-                </button>
-            </div>
-        </div>
+      <>
+        <SingleFileUploader/>
+      </>
     )
 }
-
+ 
 export function MainPage() {
     return (
         <>
@@ -530,9 +571,8 @@ export function MainPage() {
                                 <div className='px-10 col-span-2 text-lg'>
                                     <Welcome />
                                     <div className='py-2'/>
-                                    <Upload/>
-                                    <div className='py-2'/>
                                 </div>
+                        <Upload />
                         </div>
                     </section>
                 </div>
