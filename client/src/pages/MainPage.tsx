@@ -1,6 +1,7 @@
 import { Navbar } from "./Navbar"
 import SignatureCanvas from "../components/CameraHandSign"
 import { useAuth } from "../context/auth/AuthContext"
+import SingleFileUploader from "../components/FileUploader"
 
 function Welcome() {
     return(
