@@ -26,13 +26,19 @@ const DragItem: FC<DragItemProps> = ({ src, onDragStart}) => {
     )
 }
 
-const Canvas = () => {
+type CanavasProps = {
+    cnv_sign: string,
+    send_data_to_parent?: (stageRef_send: Konva.Stage) => void;
+
+}
+const Canvas: FC<CanavasProps> = ({cnv_sign, send_data_to_parent}) => {
     const [images, setImages] = useState<Img[] | []>([]);
     const [dragImageSrc, setDragImageSrc] = useState('');
     const stageRef = useRef<Konva.Stage | null>(null)
     const [selectedId, selectShape] = useState<string | null>(null)
+    const layerRef = useRef<Konva.Layer | null>(null)
 
-
+    
     // FIX "any" TYPE
     const checkDeselect = (e:any) => {
         const clickedOnEmpty = e.target === e.target.getStage()
@@ -40,6 +46,7 @@ const Canvas = () => {
             selectShape(null)
         }
     }
+
 
     const handleDragStart = (src:string) => {
       setDragImageSrc(src);
@@ -73,15 +80,33 @@ const Canvas = () => {
         }
       ])
     };
+
+    setTimeout(() => {
+        if(send_data_to_parent && stageRef.current) {
+            send_data_to_parent(stageRef.current)
+            console.log('stageRef sent')
+       }
+       console.log('expired')
+    }, 7000);
+    
     
     return (
       <div>
-        <div style={{ marginBottom: '10px' }}>
-          <DragItem 
-            src="/testsign.png" 
-            onDragStart={handleDragStart} 
-          />
-        </div>
+        <div className='bg-[white] text-[black] p-[5px] text-decoration: wavy'>
+            <p>
+                <i>
+                    Drag and drop your signature to the document
+                </i>
+            </p>
+            <br/>
+            <div className='bg-[lightgrey]' style={{ marginBottom: '10px' }}>
+            <DragItem 
+                src={cnv_sign} 
+                onDragStart={handleDragStart} 
+            />
+            </div>
+        </div>  
+
         
         <div 
           onDragOver={handleDragOver}
@@ -96,9 +121,9 @@ const Canvas = () => {
             onMouseDown={checkDeselect}
             onTouchStart={checkDeselect}
             >
-            <Layer>          
+            <Layer ref={layerRef}>          
             </Layer>
-            <Layer>
+            <Layer >
               {images.map((img) => (
                 <KonvaImage
                   key={img.id}      
@@ -139,7 +164,7 @@ const KonvaImage: FC<KonvaImageProps> = ({ src, x, y, draggable, isSelected, onS
     const trRef = useRef() as LegacyRef<Konva.Transformer> | undefined;
     
     
-    React.useEffect(() => {
+    useEffect(() => {
         if (isSelected) {
             // @ts-ignore
             trRef.current.nodes([shapeRef.current])
@@ -149,7 +174,7 @@ const KonvaImage: FC<KonvaImageProps> = ({ src, x, y, draggable, isSelected, onS
     if (!image) return null;
     
     // Calculate appropriate size
-    const maxDimension = 100;
+    const maxDimension = 200;
     let width = image.width;
     let height = image.height;
     

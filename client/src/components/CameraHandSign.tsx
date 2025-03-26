@@ -41,9 +41,10 @@ interface Segment {
 
 interface camProps {
   register?:  (pngBlob: Blob) => void;
+  send_data_to_parent?: (url: string) => void;
 }
 
-const SignatureCanvas = ({ register }: camProps)  => {
+const SignatureCanvas = ({ register, send_data_to_parent }: camProps)  => {
   const { userName, setProb } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -61,6 +62,7 @@ const SignatureCanvas = ({ register }: camProps)  => {
   const normalizedTargetRef = useRef<{ x: number; y: number } | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const segmentsRef = useRef<Segment[]>([]);
+
 
   const hands = new Hands({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
@@ -331,14 +333,49 @@ const SignatureCanvas = ({ register }: camProps)  => {
       const ctx = offscreenCanvas.getContext("2d");
     
       if (!ctx) return;
-    
-      // Flip the context back before drawing the image
+
+      ctx.canvas.width = boundingBox!.size;
+      ctx.canvas.height = boundingBox!.size / 2;
       ctx.translate(drawingCanvas.width, 0);
       ctx.scale(-1, 1);
-      ctx.drawImage(drawingCanvas, 0, 0);
+  
+    // Flip the context back before drawing the image
+    
+    let sx = boundingBox!.x - boundingBox!.size
+    let sy = boundingBox!.y-boundingBox!.size/2
+    let sw = boundingBox!.size * 2
+    let sh = boundingBox!.size
+    let dx = -boundingBox!.size + 640
+    let dy = 0
+    let dw = ctx.canvas.width
+    let dh = ctx.canvas.height
+    ctx.drawImage(drawingCanvas, sx, sy, sw, sh , dx, dy, dw, dh);
+
+    
+      // Flip the context back before drawing the image
+      //ctx.translate(drawingCanvas.width, 0);
+      //ctx.scale(-1, 1);
+      //ctx.drawImage(drawingCanvas, 0, 0);
+
+
+      // ----- 0) SAVE PNG PDF ----
+      if(send_data_to_parent){
+        offscreenCanvas.toBlob((blob) => {
+          const link = document.createElement("a")
+          const url = URL.createObjectURL(blob!)
+          link.download = 'signature.png'
+          link.href = url
+          link.id = 'sign-id'
+          send_data_to_parent(url)
+        })
+      }
+      
+
     
       // ----- 1) SAVE PNG -----
   
+      /**
+       
       offscreenCanvas.toBlob((blob) => {
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob!);
@@ -348,7 +385,9 @@ const SignatureCanvas = ({ register }: camProps)  => {
         console.log(`${url}`);
         URL.revokeObjectURL(url);
       }, "image/png");
-      
+      * 
+       */
+      // -------1)
     
       // ----- 2) SAVE SVG -----
   

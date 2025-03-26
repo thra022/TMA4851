@@ -1,22 +1,29 @@
-import React, {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react'
+import React, {FC, useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react'
 import * as pdfjsLib from "pdfjs-dist";
 import Canvas from './Canvas';
-import { render } from 'react-dom';
+import jsPDF from 'jspdf';
+import Konva from 'konva';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc ="../../../node_modules/pdfjs-dist/build/pdf.worker.mjs";
 
-const SingleFileUploader = () => {
+type SingleFileUploaderProps = {
+    file_src: string
+}
+const SingleFileUploader: FC<SingleFileUploaderProps> = (file_src) => {
     const [file, setFile] = useState<File | null>(null);
-    const [changed, setChanged] = useState<boolean> (false) 
 
-    const dragUrl = useRef()
+    const [rendered, setRendered] = useState(false)
+
+    const [konvaCanvas, setCanvas] = useState<HTMLCanvasElement | null>(null)
+
+    const [stage, setStage] = useState<Konva.Stage | null>(null)
+
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             setFile(e.target.files[0]);
             try {
                 renderPDF(URL.createObjectURL(e.target.files[0]))
-                //renderPDF(URL.createObjectURL(e.target.files[0]))
             } catch {
                 let error = new Error
                 throw console.error(error);
@@ -44,9 +51,8 @@ const SingleFileUploader = () => {
                 let outputScale = window.devicePixelRatio || 1;
         
                 //let canvas = document.getElementById('the-canvas') as HTMLCanvasElement
-                let canvas;
                 getKonvaCanvas.then((cnv) => {
-                    canvas=cnv
+                    let canvas=cnv
                     let context = canvas!.getContext('2d')
         
                     canvas.width = Math.floor(viewport.width * outputScale)
@@ -65,14 +71,70 @@ const SingleFileUploader = () => {
                         let renderTask = page.render(renderContext)
                         renderTask.promise.then(function() {
                             console.log('rendered')
-                            setChanged(true)
+                            setCanvas(canvas)
+                            setRendered(true)
                         })
-                
                 
                 }).catch((err) => {throw new Error(err)})
                 
             })
         })
+    }
+
+    const handleDataFromChild = (data:Konva.Stage) => {
+        if(data){
+            setStage(data)
+        } else {console.log('no data?')}
+    }
+    
+    const handleExport = () => {
+        if (stage){
+
+            let layers = stage.getLayers()
+            let canvases = [layers[0].canvas._canvas, layers[1].canvas._canvas]
+
+            let doc = new jsPDF('p','px')
+
+            doc.addImage(canvases[0],'PNG',0,0,892/2,1262/2)
+            doc.addImage(canvases[1],'PNG',0,0,892/2,1262/2)
+
+            doc.save('test.pdf')
+            // let doc = new jsPDF('p','px')
+            // doc.addImage(
+            //     stage.toDataURL({pixelRatio:1, mimeType: 'image/png'}),
+            //     'PNG',
+            //     0,
+            //     0,
+            //     892/(1.5),
+            //     1262/(1.5))
+            // doc.save('test.pdf')
+
+
+
+            
+            
+        }
+        konvaCanvas?.toBlob((blob) => {
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob!);
+            link.download = "signature.png";
+            link.href = url;
+            link.click();
+            console.log(`${url}`);
+            URL.revokeObjectURL(url);
+          }, "image/png");
+
+        // console.log('handleExport called')
+        // console.log(konvaCanvas)
+        // if (canvas != null) {
+        //     console.log('canvas exists')
+        //     let url = canvas.toDataURL('image/png')
+        //     let doc = new jsPDF('p','mm')
+        //     doc.addImage(url,'PNG',0,0,canvas.width,canvas.height)
+        //     doc.save('test.pdf')
+        // } else {
+        //     return undefined
+        // }
     }
 
     return (
@@ -97,37 +159,31 @@ const SingleFileUploader = () => {
                         </div>
                     </div>  
                 </div>
-                <div className='bg-[#b0caff] max-w-[500px] text-[white] rounded-[10px] mt-3'>
-                    <h1><b><i>Upload files</i></b></h1>
+                {rendered && (
+                    <div className='bg-[#b0caff] max-w-[500px] text-[white] rounded-[10px] mt-3'>
+                    <h1><b><i>Export PDF</i></b></h1>
+                    
                     <div className='bg-[white] text-[black] p-[5px] text-decoration: wavy'>
-                        <p>
-                            <i>
-                                Drag and drop your signature to the document
-                            </i>
-                        </p>
-                        <br/>
-                        <div>
-                            <p>Your signature:</p>
-                            {/*ENDRE TIL DYNAMISK */}
-                            <img
-                            alt='signature'
-                            src='/testsign.png'
-                             />
-                        </div>
-                        
+                        {konvaCanvas && (
+                        <button className='inline-block bg-[green] text-[white] hover:brightness-[85%] hover:transition-[0.3s] hover:cursor-pointer mt-3 px-8 py-1 rounded-full text-lg'
+                         onClick={handleExport}>Here</button>
+                        )}
                         
                     </div>  
                 </div>
+                )}
+                
             </div>
                 <div className="relative px-[10px] " >
                 
                 {file && (
-                            <div className='bg-[#b0caff] text-[white] w-[892px] rounded-[10px] mt-3'>
+                            <div className='bg-[#b0caff] text-[white] w-[892px]  rounded-t-lg mt-3'>
                                 <h1><b><i>{file.name}</i></b></h1>
                             </div>
                         )}
                 
-                <Canvas />
+                
+                <Canvas send_data_to_parent={handleDataFromChild} cnv_sign={file_src.file_src} />
                 </div>
             </div>
         </>

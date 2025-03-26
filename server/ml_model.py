@@ -92,4 +92,4 @@ merged_embeddings = Lambda(lambda tensors: K.abs(tensors[0] - tensors[1]))(
 output = Dense(1, activation="sigmoid")(merged_embeddings)
 
 model = Model(inputs=[inputA, inputB], outputs=output)
-model.load_weights("/Users/aaryan/Desktop/2025/TMA4851/server/320x240.keras")
+model.load_weights("320x240.keras")

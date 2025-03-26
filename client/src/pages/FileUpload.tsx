@@ -8,7 +8,7 @@ export function FileUpload() {
         <div className="min-w-[1280px] h-full max-width: 1280px mx-[auto] my-[auto] p-2rem text-center">
             <Navbar />
                 <div className='flex-[content] mt-[80px] bg-[#d7f8ff] rounded-md px-5'>
-                    <SingleFileUploader />
+                    <SingleFileUploader file_src="balls" />
                 </div>
             </div>
         </>

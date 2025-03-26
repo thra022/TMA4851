@@ -2,6 +2,7 @@ import { Navbar } from "./Navbar"
 import SignatureCanvas from "../components/CameraHandSign"
 import { useAuth } from "../context/auth/AuthContext"
 import SingleFileUploader from "../components/FileUploader"
+import { MouseEvent, MouseEventHandler, useEffect, useState } from "react"
 
 function Welcome() {
     return(
@@ -30,23 +31,26 @@ function Welcome() {
 function Upload() {
     return(
       <>
-        <SingleFileUploader/>
       </>
     )
 }
  
 export function MainPage() {
     const { probability } = useAuth();
+    const [data_from_child, setDataFromChild] = useState("")
 
+    const handleDataFromChild = (data:string) => {
+      setDataFromChild(data)
+    }
+    
     return (
         <>
-        <div className="min-w-[1280px] h-full max-width: 1280px mx-[auto] my-[auto] p-2rem text-center">
-            <Navbar />
+        <div className="min-w-[1280px] h-full max-width: 1280px mx-[auto] my-[auto] p-2rem text-center">            <Navbar />
                 <div className='flex-[content] mt-[80px] bg-[#d7f8ff] rounded-md px-5'>
                     <section className="">
                         <div className="grid grid-cols-5 content-center py-5">
                                 <div className='px-10 col-span-3'>
-                                    <SignatureCanvas />
+                                    <SignatureCanvas send_data_to_parent={handleDataFromChild}/>
                                     {probability ? <p>Probability: {probability}</p> : null}
                                     <div className='py-2'>
                                     </div>
@@ -55,7 +59,9 @@ export function MainPage() {
                                     <Welcome />
                                     <div className='py-2'/>
                                 </div>
-                        <Upload />
+                            {(data_from_child != '') && (
+                              <SingleFileUploader file_src={data_from_child}/>
+                              )}
                         </div>
                     </section>
                 </div>
