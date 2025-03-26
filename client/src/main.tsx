@@ -16,12 +16,13 @@ ReactDOM.createRoot(root).render(
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        
         <Route path="/tempMain" element={<MainPage />} />
         <Route path="/upload" element={<FileUpload />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-                        <Route path="/" element={<MainPage />} />
+          <Route path="/" element={<MainPage />} />
         </Route>
 
         {/* Redirect unknown routes to login */}

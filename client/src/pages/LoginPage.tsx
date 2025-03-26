@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { login } from '../services/api'
 import { useAuth } from '../context/auth/AuthContext'
 import { useNavigate } from 'react-router'
@@ -11,16 +11,24 @@ export function LoginPage() {
     const navigate = useNavigate();
     const { login: authLogin, isAuthenticated } = useAuth();
 
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/')
+        }
+        console.log(isAuthenticated)
+    }, [])
+
     if (isAuthenticated) {
         navigate('/')
     }
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null);
         try {
             const data = await login(username, password)
-            authLogin(data.token); 
+            authLogin(data.token, username);
             navigate("/");
         } catch (err) {
             setError('Login failed. Please check your credentials and try again.')
