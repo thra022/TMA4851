@@ -2,7 +2,7 @@ import ReactDOM from "react-dom/client"
 import { BrowserRouter, Routes, Route } from 'react-router'
 import { AuthProvider } from "./context/auth/AuthContext"
 import './index.css'
-import { LoginPage, MainPage, RegisterPage } from "./pages"
+import { FileUpload, LoginPage, MainPage, RegisterPage } from "./pages"
 import ProtectedRoute from "./components/ProtectedRoute"
 
 const root = document.getElementById('root')
@@ -17,6 +17,9 @@ ReactDOM.createRoot(root).render(
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         
+        <Route path="/tempMain" element={<MainPage />} />
+        <Route path="/upload" element={<FileUpload />} />
+
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<MainPage />} />

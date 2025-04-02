@@ -1,6 +1,8 @@
 import { Navbar } from "./Navbar"
 import SignatureCanvas from "../components/CameraHandSign"
 import { useAuth } from "../context/auth/AuthContext"
+import SingleFileUploader from "../components/FileUploader"
+import { MouseEvent, MouseEventHandler, useEffect, useState } from "react"
 
 function Welcome() {
     return(
@@ -25,38 +27,30 @@ function Welcome() {
         </div>
     )
 }
+
 function Upload() {
     return(
-        <div className='bg-[#b0caff] max-w-[300px] text-[white] rounded-[10px] mt-3'>
-            <h1><b><i>Upload files</i></b></h1>
-            <div className='bg-[white] text-[black] p-[5px] text-decoration: wavy'>
-                <p>
-                    <i>
-                        If you would like to sign a .pdf file, please upload the desired file here:
-                    </i>
-                </p>
-                <br/>
-                <div>Choose which files to upload</div>
-                <button className={`bg-[blue] hover:cursor-pointer hover:brightness-[85%] hover:transition-[0.3s] mt-3 px-8 py-1 rounded-full text-white text-lg`}>
-                  Select Files
-                </button>
-            </div>
-        </div>
+      <>
+      </>
     )
 }
-
+ 
 export function MainPage() {
     const { probability } = useAuth();
+    const [data_from_child, setDataFromChild] = useState("")
 
+    const handleDataFromChild = (data:string) => {
+      setDataFromChild(data)
+    }
+    
     return (
         <>
-        <div className="min-w-[1280px] h-full max-width: 1280px mx-[auto] my-[auto] p-2rem text-center">
-            <Navbar />
+        <div className="min-w-[1280px] h-full max-width: 1280px mx-[auto] my-[auto] p-2rem text-center">            <Navbar />
                 <div className='flex-[content] mt-[80px] bg-[#d7f8ff] rounded-md px-5'>
                     <section className="">
                         <div className="grid grid-cols-5 content-center py-5">
                                 <div className='px-10 col-span-3'>
-                                    <SignatureCanvas />
+                                    <SignatureCanvas send_data_to_parent={handleDataFromChild}/>
                                     {probability ? <p>Probability: {probability}</p> : null}
                                     <div className='py-2'>
                                     </div>
@@ -64,9 +58,10 @@ export function MainPage() {
                                 <div className='px-10 col-span-2 text-lg'>
                                     <Welcome />
                                     <div className='py-2'/>
-                                    <Upload/>
-                                    <div className='py-2'/>
                                 </div>
+                            {(data_from_child != '') && (
+                              <SingleFileUploader file_src={data_from_child}/>
+                              )}
                         </div>
                     </section>
                 </div>
