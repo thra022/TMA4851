@@ -437,7 +437,7 @@ const SignatureCanvas = ({ register, send_data_to_parent }: camProps)  => {
       offscreenCanvas.toBlob((blob) => {
         if (blob && userName) {
           const probability = validateSignature(blob, userName);
-          probability.then((data) => setProb(data.probability[0][0]));
+          probability.then((data) => setProb(data.probability));
         }
       }, "image/png");
     }
