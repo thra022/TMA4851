@@ -11,7 +11,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import tensorflow as tf
 from PIL import Image
 import numpy as np
-from ml_model import model, load_and_preprocess_image, load_and_preprocess_inmemory_image
+from ml_model import distance_model, probability_model, load_and_preprocess_image, load_and_preprocess_inmemory_image
 import cv2
 
 class UserListApiView(APIView):
@@ -85,8 +85,9 @@ class ValidateSignatureApiView(APIView):
             X1 = np.array([load_and_preprocess_image(original_image_path)])
             X2 = np.array([load_and_preprocess_inmemory_image(new_image)])
             # Make prediction
-            prediction = model.predict([X1, X2])
-            print(prediction)
+            distance_prediction = distance_model.predict([X1, X2])
+            prediction = probability_model.predict(distance_prediction)[0][0]
+
             return Response({"probability": prediction}, status=status.HTTP_200_OK)
         except Exception as e:
             print(str(e))
